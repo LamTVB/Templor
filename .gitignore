@@ -6,3 +6,4 @@ grammar/mino.sablecc3
 mino.iml
 sablecc.jar
 src/templor/language_templor
+out/
