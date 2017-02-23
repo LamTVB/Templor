@@ -1,0 +1,52 @@
+Language templor;
+
+Lexer
+
+    lower = 'a'..'z';
+    upper = 'A'..'Z';
+    number = ('0'..'9')+;
+
+    id = lower name_char*;
+    name_char = upper | lower | '_';
+    interpolation = Shortest '<{' Any* '}>';
+    template_def = '"' (name_char* | interpolation* | number) '"';
+
+    blank = ' ' | #13 | #10 | #9;
+    comment = Shortest '/*' Any* '*/';
+
+    Token
+        interpolation;
+
+    Ignored
+        blank, comment;
+
+Parser
+
+    program = stms;
+
+    stms =
+        {more:} stms stm |
+        {zero:} ;
+
+    stm =
+        {print:} 'print' [lp:]'(' template ')' ';' |
+        {render:} 'render' [lp:]'(' template ')' ';'|
+        {create:} [template_name:]id [eq:]':=' template ';'|
+        {call:} template [call:]'::' id ';';
+
+    template =
+        {interpolation:} interpolation |
+        {template_def:} template_def |
+        {template_name:} id;
+
+    parameters_opt =
+        {more:} id ',' parameters_opt |
+        {one:} id |
+        {zero:} ;
+
+
+
+
+
+
+

@@ -1,0 +1,5 @@
+year := "<{year}>";
+name := "<{name}>";
+
+render(name);
+print(year);
