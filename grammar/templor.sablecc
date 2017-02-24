@@ -8,14 +8,13 @@ Lexer
 
     id = lower name_char*;
     name_char = upper | lower | '_';
-    interpolation = Shortest '<{' Any* '}>';
-    template_def = '"' (name_char* | interpolation* | number) '"';
+    template_def = Shortest '<{' (name_char* | number) '}>';
 
     blank = ' ' | #13 | #10 | #9;
     comment = Shortest '/*' Any* '*/';
 
     Token
-        interpolation;
+        template_def;
 
     Ignored
         blank, comment;
@@ -35,7 +34,6 @@ Parser
         {call:} template [call:]'::' id ';';
 
     template =
-        {interpolation:} interpolation |
         {template_def:} template_def |
         {template_name:} id;
 
