@@ -1,5 +1,72 @@
-year := "<{year}>";
-name := "<{name}>";
+mino := <{
+    class Object {
 
-render(name);
-print(year);
+      fun ==(obj) {
+        return self is obj;
+      }
+
+      fun !=(obj){
+        return !(self == obj);
+      }
+
+      fun print(obj) {
+        obj.to_s().to_system_out();
+      }
+
+      fun to_s() {
+        return null;
+      }
+
+      primitive abort(message);
+
+      fun assert(cond,message) {
+        if (!cond) {
+          abort("assertion failed: " + message);
+        }
+      }
+    }
+
+    class Boolean {
+
+      fun to_s() {
+        if(self) {
+          return "true";
+        }
+        return "false";
+      }
+    }
+
+    class Integer {
+
+
+      primitive +(i);
+      primitive *(i);
+      primitive %(i);
+      primitive -(i);
+      primitive to_s();
+      primitive /(i);
+    }
+
+    class String {
+
+      fun to_s() {
+        return self;
+      }
+
+      primitive +(s);
+      primitive to_system_out();
+    }
+
+    class Float{
+        primitive +(f);
+        primitive -(f);
+        primitive *(f);
+        primitive /(f);
+        primitive to_s();
+    }
+    i = 1;
+    print(i);
+}>;
+
+
+print(mino);

@@ -4,7 +4,7 @@ import templor.language_templor.Node;
 import templor.language_templor.Parser;
 import templor.language_templor.ParserException;
 import templor.language_templor.LexerException;
-import templor.walker.InterpreterEngine;
+import templor.walker.TemplorEngine;
 
 import java.io.*;
 
@@ -43,6 +43,7 @@ public class TemplorInterpreter {
         try {
             // parse
             syntaxTree = new Parser(in).parse();
+//            TreeVisualizer.printTree(syntaxTree);
         }
         catch (IOException e) {
             String inputName;
@@ -65,7 +66,7 @@ public class TemplorInterpreter {
             System.exit(1);
         }
 
-        InterpreterEngine interpreterEngine = new InterpreterEngine();
+        TemplorEngine interpreterEngine = new TemplorEngine();
             // interpret
         interpreterEngine.visit(syntaxTree);
 

@@ -8,7 +8,7 @@ Lexer
 
     id = lower name_char*;
     name_char = upper | lower | '_';
-    template_def = Shortest '<{' (name_char* | number) '}>';
+    template_def = Shortest '<{' Any* '}>';
 
     blank = ' ' | #13 | #10 | #9;
     comment = Shortest '/*' Any* '*/';
