@@ -5,8 +5,6 @@ import templor.language_templor.*;
 import templor.language_templor.Node;
 import templor.language_templor.Walker;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,9 +14,9 @@ import java.util.Map;
 public class TemplatesFinder
         extends Walker {
 
-    private Map<String, mino.language_mino.Node> parsedTemplates = new HashMap<>();
+    private Map<String, Node> templates = new HashMap<>();
 
-    private mino.language_mino.Node templateDef;
+    private Node templateDef;
 
     public void visit(Node node){
         node.apply(this);
@@ -28,32 +26,21 @@ public class TemplatesFinder
     public void caseStm_Create(
             NStm_Create node) {
 
-        visit(node.get_Template());
+        visit(node.get_AddTemplate());
         if(this.templateDef != null){
-            this.parsedTemplates.put(node.get_TemplateName().getText(), this.templateDef);
+            this.templates.put(node.get_TemplateName().getText(), this.templateDef);
         }
     }
 
-    public Map<String, mino.language_mino.Node> getTemplates(){
-        return this.parsedTemplates;
+    public Map<String, Node> getTemplates(){
+        return this.templates;
     }
 
     @Override
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        String template = node.get_TemplateDef().getText();
-        String template_def = template.substring(2, template.length() - 2);
-
-        StringReader reader = new StringReader(template_def);
-        mino.language_mino.Node syntaxTree = null;
-        try {
-            syntaxTree = new mino.language_mino.Parser(reader).parse();
-            this.templateDef = syntaxTree;
-        }
-        catch (mino.language_mino.LexerException | IOException | mino.language_mino.ParserException e) {
-            e.printStackTrace();
-        }
+        this.templateDef = node.get_TemplateDef();
     }
 
     @Override
@@ -62,8 +49,8 @@ public class TemplatesFinder
 
         String template_name = node.get_Id().getText();
 
-        if(this.parsedTemplates.containsKey(template_name)){
-            this.templateDef = this.parsedTemplates.get(template_name);
+        if(this.templates.containsKey(template_name)){
+            this.templateDef = this.templates.get(template_name);
         }else{
             throw new InterpreterException("Template of name " + template_name + " is unknown", node.getLine(), node.getPos());
         }

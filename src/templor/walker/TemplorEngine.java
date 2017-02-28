@@ -2,6 +2,7 @@ package templor.walker;
 
 import mino.language_mino.Parser;
 import mino.language_mino.ParserException;
+import mino.language_mino.LexerException;
 import mino.walker.InterpreterEngine;
 import templor.exception.InterpreterException;
 import templor.language_templor.*;
@@ -18,8 +19,9 @@ import java.util.Map;
 public class TemplorEngine
         extends Walker{
 
-    private Map<String, mino.language_mino.Node> templates = new HashMap<>();
+    private Map<String, Node> templates = new HashMap<>();
     private mino.language_mino.Node templateDef = null;
+    private String stringTemplateDef = null;
 
     private TemplatesFinder templatesFinder = new TemplatesFinder();
     private final InterpreterEngine interpreterEngine = new InterpreterEngine();
