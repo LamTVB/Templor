@@ -141,47 +141,50 @@ public class InterpreterEngine
     public void caseFile(
             NFile node) {
 
-        // collect class, field and method definitions
-        visit(node.get_Classdefs());
+        if(this.objectClassInfo == null || this.booleanClassInfo == null || this.integerClassInfo == null || this.floatClassInfo == null || this.stringClassInfo == null){
+            // collect class, field and method definitions
+            visit(node.get_Classdefs());
 
-        // handle compiler-known classes
-        this.objectClassInfo = this.classTable.getObjectClassInfoOrNull();
-        if (this.objectClassInfo == null) {
-            throw new InterpreterException("class Object is not defined", null);
+            // handle compiler-known classes
+
+            this.objectClassInfo = this.classTable.getObjectClassInfoOrNull();
+            if (this.objectClassInfo == null) {
+                throw new InterpreterException("class Object is not defined", null);
+            }
+
+            this.booleanClassInfo = (BooleanClassInfo) this.classTable
+                    .getBooleanClassInfoOrNull();
+            if (this.booleanClassInfo == null) {
+                throw new InterpreterException("class Boolean was not defined",
+                        null);
+            }
+
+            this.integerClassInfo = (IntegerClassInfo) this.classTable
+                    .getIntegerClassInfoOrNull();
+            if (this.integerClassInfo == null) {
+                throw new InterpreterException("class Integer was not defined",
+                        null);
+            }
+
+            this.stringClassInfo = (StringClassInfo) this.classTable
+                    .getStringClassInfoOrNull();
+            if (this.stringClassInfo == null) {
+                throw new InterpreterException("class String was not defined", null);
+            }
+
+            this.floatClassInfo =(FloatClassInfo) this.classTable
+                    .getFloatClassInfoOrNull();
+
+            if(this.floatClassInfo == null){
+                throw new InterpreterException("class Float was not defined", null);
+            }
+
+            // create initial Object instance
+            Instance instance = this.objectClassInfo.newInstance();
+
+            // create initial frame
+            this.currentFrame = new Frame(null, instance, null);
         }
-
-        this.booleanClassInfo = (BooleanClassInfo) this.classTable
-                .getBooleanClassInfoOrNull();
-        if (this.booleanClassInfo == null) {
-            throw new InterpreterException("class Boolean was not defined",
-                    null);
-        }
-
-        this.integerClassInfo = (IntegerClassInfo) this.classTable
-                .getIntegerClassInfoOrNull();
-        if (this.integerClassInfo == null) {
-            throw new InterpreterException("class Integer was not defined",
-                    null);
-        }
-
-        this.stringClassInfo = (StringClassInfo) this.classTable
-                .getStringClassInfoOrNull();
-        if (this.stringClassInfo == null) {
-            throw new InterpreterException("class String was not defined", null);
-        }
-
-        this.floatClassInfo =(FloatClassInfo) this.classTable
-                .getFloatClassInfoOrNull();
-
-        if(this.floatClassInfo == null){
-            throw new InterpreterException("class Float was not defined", null);
-        }
-
-        // create initial Object instance
-        Instance instance = this.objectClassInfo.newInstance();
-
-        // create initial frame
-        this.currentFrame = new Frame(null, instance, null);
 
         // execute statements
         visit(node.get_Stms());

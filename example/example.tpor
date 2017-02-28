@@ -1,4 +1,4 @@
-mino := <{
+classDefs := <{
     class Object {
 
       fun ==(obj) {
@@ -64,9 +64,7 @@ mino := <{
         primitive /(f);
         primitive to_s();
     }
-    i = 1;
-    print(i);
 }>;
 
-
-print(mino);
+render(classDefs);
+render(<{ i = 1; print(i); }>);
