@@ -42,8 +42,10 @@ public class TemplatesFinder
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        String template = this.templateDef.getText().substring(2, this.templateDef.getText().length() - 2);
-        StringReader reader = new StringReader(template);
+        String template = node.get_TemplateDef().getText();
+        String template_def = template.substring(2, template.length() - 2);
+
+        StringReader reader = new StringReader(template_def);
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
@@ -58,10 +60,10 @@ public class TemplatesFinder
     public void caseTemplate_TemplateName(
             NTemplate_TemplateName node) {
 
-        String template_name = node.getText();
+        String template_name = node.get_Id().getText();
 
-        if(this.parsedTemplates.containsKey(node.getText())){
-            this.templateDef = this.parsedTemplates.get(node.getText());
+        if(this.parsedTemplates.containsKey(template_name)){
+            this.templateDef = this.parsedTemplates.get(template_name);
         }else{
             throw new InterpreterException("Template of name " + template_name + " is unknown", node.getLine(), node.getPos());
         }
