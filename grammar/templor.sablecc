@@ -28,20 +28,18 @@ Parser
         {zero:} ;
 
     stm =
-        {print:} 'print' [lp:]'(' template ')' ';' |
-        {render:} 'render' [lp:]'(' template ')' ';'|
-        {create:} [template_name:]id [eq:]':=' template ';'|
+        {print:} 'print' [lp:]'(' add_template ')' ';' |
+        {render:} 'render' [lp:]'(' add_template ')' ';'|
+        {create:} [template_name:]id [eq:]':=' add_template ';'|
         {call:} template [call:]'::' id ';';
+
+    add_template =
+        {add:} add_template [plus:]'+' template |
+        {simple:} template;
 
     template =
         {template_def:} template_def |
         {template_name:} id;
-
-    parameters_opt =
-        {more:} id ',' parameters_opt |
-        {one:} id |
-        {zero:} ;
-
 
 
 
