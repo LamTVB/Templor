@@ -42,8 +42,9 @@ public class TemplorEngine
             NStm_Print node) {
 
         visit(node.get_Template());
-        executeTemplate();
-
+        if(this.templateDef != null){
+            System.out.println(this.templateDef.getText());
+        }
     }
 
     @Override
@@ -64,13 +65,14 @@ public class TemplorEngine
             NStm_Render node) {
 
         visit(node.get_Template());
+        executeTemplate();
     }
 
     @Override
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        parseTree(node);
+        parseTree(node.get_TemplateDef());
     }
 
     public void executeTemplate(){
