@@ -158,7 +158,7 @@ public class TemplorEngine
             Node node){
 
         visit(node);
-        String template = this.stringTemplateDef;
+        String template = formatTemplateDef(this.stringTemplateDef);
         this.stringTemplateDef = null;
         return template;
     }
