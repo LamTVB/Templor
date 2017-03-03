@@ -20,6 +20,8 @@ public class TemplorEngine
         extends Walker{
 
     private Map<String, Node> templates = new HashMap<>();
+
+    //contains the syntax tree already parse to be interpreted
     private mino.language_mino.Node templateDef = null;
     private String stringTemplateDef = null;
 
@@ -53,6 +55,8 @@ public class TemplorEngine
 
         if(templateText != null){
             System.out.println(templateText);
+        }else{
+            throw new InterpreterException("Template cannot be null", node.get_Lp());
         }
     }
 
@@ -67,7 +71,7 @@ public class TemplorEngine
             this.templateDef = parseTree(template);
             this.stringTemplateDef = template.getText();
         }else{
-            throw new InterpreterException("Template of name " + template_name + " is unknown", node.getLine(), node.getPos());
+            throw new InterpreterException("Template of name " + template_name + " is unknown", node.get_Id());
         }
     }
 
@@ -75,9 +79,12 @@ public class TemplorEngine
     public void caseStm_Render(
             NStm_Render node) {
 
-        visit(node.get_AddTemplate());
-        if(this.templateDef != null){
-            this.interpreterEngine.visit(this.templateDef);
+        mino.language_mino.Node templateDef = getTemplate(node.get_AddTemplate());
+
+        if(templateDef != null){
+            this.interpreterEngine.visit(templateDef);
+        }else{
+            throw new InterpreterException("Template to render cannot be null", node.get_Lp());
         }
     }
 
@@ -89,13 +96,13 @@ public class TemplorEngine
         String leftTemplate = getTemplateText(node.get_Template());
 
         if(rightTemplate == null){
-            throw new InterpreterException("Right template should not be null", node.get_Plus().getLine(), node.get_Plus().getPos());
+            throw new InterpreterException("Right template should not be null", node.get_Plus());
         }else if(leftTemplate == null){
-            throw new InterpreterException("Left template should not be null", node.get_Plus().getLine(), node.get_Plus().getPos());
+            throw new InterpreterException("Left template should not be null", node.get_Plus());
         }else{
             String template = rightTemplate.concat(leftTemplate);
-            this.templateDef = parseTree(template);
             this.stringTemplateDef = template;
+            this.templateDef = parseTree(template);
         }
     }
 
@@ -110,8 +117,8 @@ public class TemplorEngine
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        this.templateDef = parseTree(node.get_TemplateDef());
         this.stringTemplateDef = formatTemplateDef(node.get_TemplateDef().getText());
+        this.templateDef = parseTree(node.get_TemplateDef());
     }
 
     public mino.language_mino.Node parseTree(
