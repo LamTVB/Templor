@@ -5,6 +5,9 @@ Lexer
     lower = 'a'..'z';
     upper = 'A'..'Z';
     number = ('0'..'9')+;
+    string = Shortest '"' string_char* '"';
+    string_char = Any - (#10 | #13);
+
 
     id = lower name_char*;
     name_char = upper | lower | '_';
@@ -31,7 +34,8 @@ Parser
         {print:} 'print' [lp:]'(' add_template ')' ';' |
         {render:} 'render' [lp:]'(' add_template ')' ';'|
         {create:} [template_name:]id [eq:]':=' add_template ';'|
-        {call:} template [call:]'::' id ';';
+        {call:} template [call:]'::' id ';' |
+        {populate:} 'populate' [lp:]'(' id ',' string ')' ';';
 
     add_template =
         {add:} add_template [plus:]'+' template |
@@ -40,6 +44,7 @@ Parser
     template =
         {template_def:} template_def |
         {template_name:} id;
+
 
 
 

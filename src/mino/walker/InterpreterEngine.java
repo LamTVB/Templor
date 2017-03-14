@@ -51,6 +51,8 @@ public class InterpreterEngine
 
     private FloatClassInfo floatClassInfo;
 
+    private Map<String, Object> attributes = new HashMap<>();
+
     public void visit(
             Node node) {
 
@@ -970,6 +972,19 @@ public class InterpreterEngine
         this.expList.add(node.get_Exp());
     }
 
+    @Override
+    public void caseInterpolation(
+            NInterpolation node) {
+
+        String name = node.getText().replaceAll("\\{\\{", "").replaceAll("}}", "");
+
+        if(this.attributes.containsKey(name)){
+            this.expEval = this.stringClassInfo.newString(this.attributes.get(name).toString());
+        }else{
+            throw new InterpreterException("Attribute " + name + " does not exist", node);
+        }
+    }
+
     public void integerPlus(
             MethodInfo methodInfo) {
 
@@ -1254,4 +1269,9 @@ public class InterpreterEngine
         this.currentFrame.setReturnValue(this.stringClassInfo.newString(self
                 .getValue().toString()));
     }
+
+    public void setAttributes(Map<String, Object> attributes){
+        this.attributes = attributes;
+    }
 }
+

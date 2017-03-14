@@ -66,9 +66,17 @@ classDefs := <{
     }
 }>;
 
-printer_one := <{ i = 1; print(i); }>;
-printer_two := <{ i = 2; print(i); }>;
+printer_one := <{ {{i}} }>;
+printer_two := <{ print("i = " + {{i}});}>;
 
-print(printer_one);
+populate(i, "123.123");
+
+calcul := <{ print({{i}} + 12); }>;
+
+print(printer_two);
 render(classDefs);
-render(printer_one + printer_two + <{ i = 3.4; j = 2 + 4; print(i + j); }>);
+render(printer_two + <{ i = 3.4; j = 2 + 4; print( }> + printer_one + <{ + j); }>);
+render(calcul);
+
+populate(i, "3245678");
+render(calcul);

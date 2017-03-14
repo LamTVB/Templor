@@ -23,6 +23,7 @@ Lexer
   class_name = upper name_char*;
   field_name = '_' lower name_char*;
   invalid_id = ('_' | lower | upper)+;
+  interpolation = '{{' id '}}';
 
   name_char = upper | lower | '_';
   upper = 'A'..'Z';
@@ -110,7 +111,8 @@ Parser
     {self_call:} self_call ';' |
     {while:} 'while' [l_par:]'(' exp ')' '{' stms '}' |
     {if:} 'if' [l_par:]'(' exp ')' '{' stms '}' else_opt |
-    {return:} [return_kwd:]'return' exp_opt ';';
+    {return:} [return_kwd:]'return' exp_opt ';' |
+    {interpolation:} interpolation;
 
   exp_opt =
     {one:} exp |
@@ -165,7 +167,8 @@ Parser
     {self:} 'self' |
     {true:} 'true' |
     {false:} 'false' |
-    {string:} string;
+    {string:} string |
+    {interpolation:} interpolation;
 
   call =
     right_unary_exp '.' id '(' exp_list_opt ')';

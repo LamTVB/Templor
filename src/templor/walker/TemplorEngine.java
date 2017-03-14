@@ -8,6 +8,7 @@ import templor.exception.InterpreterException;
 import templor.language_templor.*;
 import templor.language_templor.Node;
 import templor.language_templor.Walker;
+import templor.structure.Template;
 
 import java.io.*;
 import java.util.HashMap;
@@ -19,11 +20,11 @@ import java.util.Map;
 public class TemplorEngine
         extends Walker{
 
-    private Map<String, Node> templates = new HashMap<>();
+    private Map<String, Template> templates = new HashMap<>();
+    private Map<String, Object> attributes = new HashMap<>();
 
     //contains the syntax tree already parse to be interpreted
-    private mino.language_mino.Node templateDef = null;
-    private String stringTemplateDef = null;
+    private Template tempTemplate = null;
 
     private TemplatesFinder templatesFinder = new TemplatesFinder();
     private final InterpreterEngine interpreterEngine = new InterpreterEngine();
@@ -38,6 +39,8 @@ public class TemplorEngine
 
         templatesFinder.visit(node);
         this.templates = templatesFinder.getTemplates();
+        this.attributes = templatesFinder.getAttributes();
+        this.interpreterEngine.setAttributes(this.attributes);
         node.applyOnChildren(this);
     }
 
@@ -51,10 +54,10 @@ public class TemplorEngine
     public void caseStm_Print(
             NStm_Print node) {
 
-        String templateText = getTemplateText(node.get_AddTemplate());
+        Template template = getTemplate(node.get_AddTemplate());
 
-        if(templateText != null){
-            System.out.println(templateText);
+        if(template != null && template.get_templateDef() != null){
+            System.out.println(template.get_templateDef());
         }else{
             throw new InterpreterException("Template cannot be null", node.get_Lp());
         }
@@ -67,9 +70,7 @@ public class TemplorEngine
         String template_name = node.get_Id().getText();
 
         if(this.templates.containsKey(template_name)){
-            Node template = this.templates.get(template_name);
-            this.templateDef = parseTree(template);
-            this.stringTemplateDef = template.getText();
+            this.tempTemplate = this.templates.get(template_name);
         }else{
             throw new InterpreterException("Template of name " + template_name + " is unknown", node.get_Id());
         }
@@ -79,9 +80,10 @@ public class TemplorEngine
     public void caseStm_Render(
             NStm_Render node) {
 
-        mino.language_mino.Node templateDef = getTemplate(node.get_AddTemplate());
+        Template template = getTemplate(node.get_AddTemplate());
 
-        if(templateDef != null){
+        if(template != null){
+            mino.language_mino.Node templateDef = parseTree(template.get_templateDef());
             this.interpreterEngine.visit(templateDef);
         }else{
             throw new InterpreterException("Template to render cannot be null", node.get_Lp());
@@ -92,17 +94,20 @@ public class TemplorEngine
     public void caseAddTemplate_Add(
             NAddTemplate_Add node) {
 
-        String rightTemplate = getTemplateText(node.get_AddTemplate());
-        String leftTemplate = getTemplateText(node.get_Template());
+        Template rightTemplate = getTemplate(node.get_AddTemplate());
+        Template leftTemplate = getTemplate(node.get_Template());
 
         if(rightTemplate == null){
             throw new InterpreterException("Right template should not be null", node.get_Plus());
         }else if(leftTemplate == null){
             throw new InterpreterException("Left template should not be null", node.get_Plus());
         }else{
-            String template = rightTemplate.concat(leftTemplate);
-            this.stringTemplateDef = template;
-            this.templateDef = parseTree(template);
+            String rightTemplateDef = rightTemplate.get_templateDef();
+            String leftTemplateDef = leftTemplate.get_templateDef();
+
+            String template = rightTemplateDef.concat(leftTemplateDef);
+
+            this.tempTemplate = new Template(template);
         }
     }
 
@@ -117,8 +122,25 @@ public class TemplorEngine
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        this.stringTemplateDef = formatTemplateDef(node.get_TemplateDef().getText());
-        this.templateDef = parseTree(node.get_TemplateDef());
+        Template template = new Template(formatTemplateDef(node.get_TemplateDef().getText()));
+        this.tempTemplate = template;
+    }
+
+    @Override
+    public void caseStm_Populate(
+            NStm_Populate node) {
+
+        String name = node.get_Id().getText();
+        String value = node.get_String().getText();
+
+        if(name == null){
+            throw new InterpreterException("Name of populate should not be null", node.get_Lp());
+        }else if(value == null){
+            throw new InterpreterException("Value of populate should not be null", node.get_Lp());
+        }else{
+            value = value.substring(1, value.length() - 1);
+            this.attributes.put(name, value);
+        }
     }
 
     public mino.language_mino.Node parseTree(
@@ -140,6 +162,10 @@ public class TemplorEngine
     public mino.language_mino.Node parseTree(
             String templateToParse){
 
+        for(Map.Entry<String, Object> attribute : attributes.entrySet()){
+            templateToParse = templateToParse.replaceAll("\\{\\{"+attribute.getKey()+"}}", attribute.getValue().toString());
+        }
+
         StringReader reader = new StringReader(templateToParse);
         mino.language_mino.Node syntaxTree = null;
         try {
@@ -152,21 +178,12 @@ public class TemplorEngine
         return syntaxTree;
     }
 
-    public mino.language_mino.Node getTemplate(
+    public Template getTemplate(
             Node node){
 
         visit(node);
-        mino.language_mino.Node template = this.templateDef;
-        this.templateDef = null;
-        return template;
-    }
-
-    public String getTemplateText(
-            Node node){
-
-        visit(node);
-        String template = formatTemplateDef(this.stringTemplateDef);
-        this.stringTemplateDef = null;
+        Template template = this.tempTemplate;
+        this.tempTemplate = null;
         return template;
     }
 
