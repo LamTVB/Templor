@@ -21,7 +21,6 @@ public class TemplorEngine
         extends Walker{
 
     private Map<String, Template> templates = new HashMap<>();
-    private Map<String, Object> attributes = new HashMap<>();
 
     //contains the syntax tree already parse to be interpreted
     private Template tempTemplate = null;
@@ -39,9 +38,7 @@ public class TemplorEngine
 
         templatesFinder.visit(node);
         this.templates = templatesFinder.getTemplates();
-        this.attributes = templatesFinder.getAttributes();
-        this.interpreterEngine.setAttributes(this.attributes);
-        node.applyOnChildren(this);
+//        node.applyOnChildren(this);
     }
 
     @Override
@@ -76,6 +73,30 @@ public class TemplorEngine
         }
     }
 
+//    @Override
+//    public void caseCall_Populate(
+//            NCall_Populate node) {
+//
+//        Template template = getTemplate(node.get_Template());
+//
+//        if(template == null){
+//            throw new InterpreterException("Template cannot be null", node.get_Lp());
+//        }
+//
+//        String name = node.get_Id().getText();
+//        String value = node.get_Exp().getText();
+//
+//        if(name == null){
+//            throw new InterpreterException("Name of populate should not be null", node.get_Lp());
+//        }else if(value == null){
+//            throw new InterpreterException("Value of populate should not be null", node.get_Lp());
+//        }else{
+//            value = value.substring(1, value.length() - 1);
+//            template.addOrUpdateAttribute(name, value);
+//        }
+//
+//    }
+
     @Override
     public void caseStm_Render(
             NStm_Render node) {
@@ -83,7 +104,7 @@ public class TemplorEngine
         Template template = getTemplate(node.get_AddTemplate());
 
         if(template != null){
-            mino.language_mino.Node templateDef = parseTree(template.get_templateDef());
+            mino.language_mino.Node templateDef = parseTree(template);
             this.interpreterEngine.visit(templateDef);
         }else{
             throw new InterpreterException("Template to render cannot be null", node.get_Lp());
@@ -107,7 +128,7 @@ public class TemplorEngine
 
             String template = rightTemplateDef.concat(leftTemplateDef);
 
-            this.tempTemplate = new Template(template);
+//            this.tempTemplate = new Template(template);
         }
     }
 
@@ -122,25 +143,10 @@ public class TemplorEngine
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        Template template = new Template(formatTemplateDef(node.get_TemplateDef().getText()));
+        String templateDef = formatTemplateDef(node.get_TemplateDef().getText());
+
+        Template template = new Template(null, templateDef, null, node.get_TemplateDef());
         this.tempTemplate = template;
-    }
-
-    @Override
-    public void caseStm_Populate(
-            NStm_Populate node) {
-
-        String name = node.get_Id().getText();
-        String value = node.get_String().getText();
-
-        if(name == null){
-            throw new InterpreterException("Name of populate should not be null", node.get_Lp());
-        }else if(value == null){
-            throw new InterpreterException("Value of populate should not be null", node.get_Lp());
-        }else{
-            value = value.substring(1, value.length() - 1);
-            this.attributes.put(name, value);
-        }
     }
 
     public mino.language_mino.Node parseTree(
@@ -160,13 +166,18 @@ public class TemplorEngine
     }
 
     public mino.language_mino.Node parseTree(
-            String templateToParse){
+            Template templateToParse){
 
-        for(Map.Entry<String, Object> attribute : attributes.entrySet()){
-            templateToParse = templateToParse.replaceAll("\\{\\{"+attribute.getKey()+"}}", attribute.getValue().toString());
+        String templateDef = templateToParse.get_templateDef();
+        Map<String, Object> attributes = templateToParse.get_attributes();
+
+        if(attributes != null){
+            for(Map.Entry<String, Object> attribute : attributes.entrySet()){
+                templateDef = templateDef.replaceAll("\\{\\{"+attribute.getKey()+"}}", attribute.getValue().toString());
+            }
         }
 
-        StringReader reader = new StringReader(templateToParse);
+        StringReader reader = new StringReader(templateDef);
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new Parser(reader).parse();

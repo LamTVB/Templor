@@ -1,4 +1,4 @@
-classDefs := <{
+classDefs()<{
     class Object {
 
       fun ==(obj) {
@@ -66,9 +66,13 @@ classDefs := <{
     }
 }>;
 
-printer_one := <{ {{i}} }>;
-printer_two := <{ print("i = " + {{i}});}>;
+listingI(i)<{ {{i}} }>;
 
+
+printer_two(i) <{ print("i = " + {{i}} ); }> (i,"12");
+
+
+/* assign := <{ {{id}} = {{value}}; }>;
 populate(i, "123.123");
 
 calcul := <{ print({{i}} + 12); }>;
@@ -78,5 +82,5 @@ render(classDefs);
 render(printer_two + <{ i = 3.4; j = 2 + 4; print( }> + printer_one + <{ + j); }>);
 render(calcul);
 
-populate(i, "3245678");
-render(calcul);
+populate(i, "24");
+render(calcul);*/

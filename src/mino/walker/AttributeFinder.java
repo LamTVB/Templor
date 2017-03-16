@@ -1,5 +1,6 @@
 package mino.walker;
 
+import mino.exception.InterpreterException;
 import mino.language_mino.NInterpolation;
 import mino.language_mino.Node;
 import mino.language_mino.Walker;
@@ -13,7 +14,13 @@ import java.util.Map;
 public class AttributeFinder
         extends Walker{
 
-    private Map<String, Object> attributes = new HashMap<>();
+    private final Map<String, Object> attributes;
+
+    public AttributeFinder(
+            Map<String, Object> attributes){
+
+        this.attributes = attributes;
+    }
 
     @Override
     public void caseInterpolation(
@@ -23,7 +30,8 @@ public class AttributeFinder
                 .replaceAll("}}", "");
 
         if(!this.attributes.containsKey(name)){
-            this.attributes.put(name, null);
+            //TODO gérer pour cactch l'erreur dans le visiteur TemplatesFinder
+            throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
         }
     }
 
@@ -31,9 +39,5 @@ public class AttributeFinder
             Node node){
 
         node.apply(this);
-    }
-
-    public Map<String, Object> getAttributes(){
-        return attributes;
     }
 }
