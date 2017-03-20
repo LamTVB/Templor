@@ -24,6 +24,7 @@ public class TemplorEngine
 
     //contains the syntax tree already parse to be interpreted
     private Template tempTemplate = null;
+    private Object expVal;
 
     private TemplatesFinder templatesFinder = new TemplatesFinder();
     private final InterpreterEngine interpreterEngine = new InterpreterEngine();
@@ -38,7 +39,7 @@ public class TemplorEngine
 
         templatesFinder.visit(node);
         this.templates = templatesFinder.getTemplates();
-//        node.applyOnChildren(this);
+        node.applyOnChildren(this);
     }
 
     @Override
@@ -73,29 +74,27 @@ public class TemplorEngine
         }
     }
 
-//    @Override
-//    public void caseCall_Populate(
-//            NCall_Populate node) {
-//
-//        Template template = getTemplate(node.get_Template());
-//
-//        if(template == null){
-//            throw new InterpreterException("Template cannot be null", node.get_Lp());
-//        }
-//
-//        String name = node.get_Id().getText();
-//        String value = node.get_Exp().getText();
-//
-//        if(name == null){
-//            throw new InterpreterException("Name of populate should not be null", node.get_Lp());
-//        }else if(value == null){
-//            throw new InterpreterException("Value of populate should not be null", node.get_Lp());
-//        }else{
-//            value = value.substring(1, value.length() - 1);
-//            template.addOrUpdateAttribute(name, value);
-//        }
-//
-//    }
+    @Override
+    public void caseStm_Populate(
+            NStm_Populate node) {
+
+        Template receiver = this.templates.get(node.get_TemplateName().getText());
+
+        if(receiver == null){
+            throw new InterpreterException("Template of name " + node.get_TemplateName().getText() + " does not exist", node.get_TemplateName());
+        }
+
+        Object exp = getExpVal(node.get_Exp());
+        String attributeName = node.get_AttributeName().getText();
+
+        if(attributeName == null){
+            throw new InterpreterException("Attribute name cannot be null", node.get_AttributeName());
+        }else if(exp == null){
+            throw new InterpreterException("Expression cannot be null", node.get_TemplateName());
+        }else{
+            receiver.addOrUpdateAttribute(attributeName, exp);
+        }
+    }
 
     @Override
     public void caseStm_Render(
@@ -127,8 +126,7 @@ public class TemplorEngine
             String leftTemplateDef = leftTemplate.get_templateDef();
 
             String template = rightTemplateDef.concat(leftTemplateDef);
-
-//            this.tempTemplate = new Template(template);
+            this.tempTemplate = new Template(null, template, null, null);
         }
     }
 
@@ -149,7 +147,35 @@ public class TemplorEngine
         this.tempTemplate = template;
     }
 
-    public mino.language_mino.Node parseTree(
+    @Override
+    public void caseExp_False(
+            NExp_False node) {
+
+        this.expVal = false;
+    }
+
+    @Override
+    public void caseExp_True(
+            NExp_True node) {
+
+        this.expVal = true;
+    }
+
+    @Override
+    public void caseExp_Num(
+            NExp_Num node) {
+
+        this.expVal = Integer.parseInt(node.get_Number().getText());
+    }
+
+    @Override
+    public void caseExp_String(
+            NExp_String node) {
+
+        this.expVal = node.get_String().getText();
+    }
+
+    private mino.language_mino.Node parseTree(
             Node nodeToParse){
 
         String template = formatTemplateDef(nodeToParse.getText());
@@ -165,7 +191,7 @@ public class TemplorEngine
         return syntaxTree;
     }
 
-    public mino.language_mino.Node parseTree(
+    private mino.language_mino.Node parseTree(
             Template templateToParse){
 
         String templateDef = templateToParse.get_templateDef();
@@ -189,7 +215,7 @@ public class TemplorEngine
         return syntaxTree;
     }
 
-    public Template getTemplate(
+    private Template getTemplate(
             Node node){
 
         visit(node);
@@ -198,12 +224,20 @@ public class TemplorEngine
         return template;
     }
 
-    public String formatTemplateDef(
+    private String formatTemplateDef(
             String templateDef){
 
         if(templateDef != null){
             return templateDef.replaceAll("<\\{"," ").replaceAll("}>", " ");
         }
         return null;
+    }
+
+    private Object getExpVal(Node node){
+
+        visit(node);
+        Object expression = this.expVal;
+        this.expVal = null;
+        return expression;
     }
 }

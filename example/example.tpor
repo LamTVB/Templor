@@ -69,13 +69,14 @@ classDefs()<{
 listingI(i)<{ {{i}} }>;
 
 
-printer_two(i) <{ print("i = " + {{i}} ); }> (i,"12");
+printer_two(i) <{ print("i = " + {{i}} ); }>;
+printer_two.i = 12;
+
+render(classDefs);
+render(printer_two);
 
 
-/* assign := <{ {{id}} = {{value}}; }>;
-populate(i, "123.123");
-
-calcul := <{ print({{i}} + 12); }>;
+/*
 
 print(printer_two);
 render(classDefs);

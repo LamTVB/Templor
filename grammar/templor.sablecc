@@ -33,8 +33,8 @@ Parser
     stm =
         {print:} 'print' [lp:]'(' add_template ')' ';' |
         {render:} 'render' [lp:]'(' add_template ')' ';'|
-        {create:} [template_name:]id '('parameters_list_opt')' add_template ';' |
-        {populate:} id [lp:]'(' id ',' exp ')'';';
+        {create:} [template_name:]id '(' parameters_list_opt ')' add_template ';' |
+        {populate:} [template_name:]id '.' [attribute_name:]id '=' exp ';';
 
     add_template =
         {add:} add_template [plus:]'+' template |
