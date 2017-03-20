@@ -12,6 +12,7 @@ import templor.structure.Template;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -104,7 +105,7 @@ public class TemplorEngine
 
         if(template != null){
             mino.language_mino.Node templateDef = parseTree(template);
-            this.interpreterEngine.visit(templateDef);
+            this.interpreterEngine.visit(templateDef, template);
         }else{
             throw new InterpreterException("Template to render cannot be null", node.get_Lp());
         }
@@ -126,7 +127,15 @@ public class TemplorEngine
             String leftTemplateDef = leftTemplate.get_templateDef();
 
             String template = rightTemplateDef.concat(leftTemplateDef);
-            this.tempTemplate = new Template(null, template, null, null);
+            Map<String, Object> attributes = new HashMap<>();
+            if(rightTemplate.get_attributes() != null){
+                attributes.putAll(rightTemplate.get_attributes());
+            }
+            if(leftTemplate.get_attributes() != null){
+                attributes.putAll(leftTemplate.get_attributes());
+            }
+
+            this.tempTemplate = new Template(null, template, attributes, null, null);
         }
     }
 
@@ -143,7 +152,7 @@ public class TemplorEngine
 
         String templateDef = formatTemplateDef(node.get_TemplateDef().getText());
 
-        Template template = new Template(null, templateDef, null, node.get_TemplateDef());
+        Template template = new Template(null, templateDef, null, node.get_TemplateDef(), null);
         this.tempTemplate = template;
     }
 
@@ -178,6 +187,7 @@ public class TemplorEngine
     private mino.language_mino.Node parseTree(
             Node nodeToParse){
 
+
         String template = formatTemplateDef(nodeToParse.getText());
         StringReader reader = new StringReader(template);
         mino.language_mino.Node syntaxTree = null;
@@ -194,15 +204,12 @@ public class TemplorEngine
     private mino.language_mino.Node parseTree(
             Template templateToParse){
 
-        String templateDef = templateToParse.get_templateDef();
-        Map<String, Object> attributes = templateToParse.get_attributes();
+        String templateDef = replaceAttributes(templateToParse);
+        templateDef = this.replaceTemplates(templateToParse, templateDef);
 
-        if(attributes != null){
-            for(Map.Entry<String, Object> attribute : attributes.entrySet()){
-                templateDef = templateDef.replaceAll("\\{\\{"+attribute.getKey()+"}}", attribute.getValue().toString());
-            }
+        if(templateDef == null){
+            throw new InterpreterException("Template def is null", null);
         }
-
         StringReader reader = new StringReader(templateDef);
         mino.language_mino.Node syntaxTree = null;
         try {
@@ -240,4 +247,68 @@ public class TemplorEngine
         this.expVal = null;
         return expression;
     }
+
+    private Template getTemplateByName(
+            String name){
+
+        if(this.templates.containsKey(name)){
+            return this.templates.get(name);
+        }else{
+            throw new InterpreterException("Template of name " + name + " does not exit", null);
+        }
+    }
+
+    private String replaceAttributes(
+            Template templateToReplace){
+
+        String templateDef = templateToReplace.get_templateDef();
+        Map<String, Object> attributes = templateToReplace.get_attributes();
+
+        if(attributes != null && templateDef != null){
+            for(Map.Entry<String, Object> attribute : attributes.entrySet()){
+                if(attribute.getValue() != null){
+                    templateDef = templateDef.replaceAll("\\{\\{"+attribute.getKey()+"}}", attribute.getValue().toString());
+                }
+            }
+        }
+
+        return templateDef;
+    }
+
+    private String replaceTemplates(
+            Template templateToReplace){
+
+        String templateDef = templateToReplace.get_templateDef();
+        List<Template> integratedTemplates = templateToReplace.get_integratedTemplates();
+
+        if(integratedTemplates != null){
+            for(Template b_template : integratedTemplates){
+                if(b_template.get_templateDef() != null){
+                    String subTemplateDef = replaceAttributes(b_template);
+                    templateDef = templateDef.replaceAll("\\{"+ b_template.get_templateName() + "}", subTemplateDef);
+                }
+            }
+        }
+
+        return templateDef;
+    }
+
+    private String replaceTemplates(
+            Template templateToReplace, String templateDef){
+
+        List<Template> integratedTemplates = templateToReplace.get_integratedTemplates();
+
+        if(integratedTemplates != null){
+            for(Template b_template : integratedTemplates){
+                if(b_template.get_templateDef() != null){
+                    String subTemplateDef = replaceAttributes(b_template);
+                    templateDef = templateDef.replaceAll("\\{"+ b_template.get_templateName() + "}", subTemplateDef);
+                }
+            }
+        }
+
+        return templateDef;
+    }
+
+
 }

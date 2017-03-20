@@ -2,10 +2,13 @@ package mino.walker;
 
 import mino.exception.InterpreterException;
 import mino.language_mino.NInterpolation;
+import mino.language_mino.NTemplate;
 import mino.language_mino.Node;
 import mino.language_mino.Walker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,6 +18,7 @@ public class AttributeFinder
         extends Walker{
 
     private final Map<String, Object> attributes;
+    private final List<String> templates = new ArrayList<>();
 
     public AttributeFinder(
             Map<String, Object> attributes){
@@ -35,9 +39,21 @@ public class AttributeFinder
         }
     }
 
+    @Override
+    public void caseTemplate(
+            NTemplate node) {
+
+        String templateName = node.getText().substring(1, node.getText().length() - 1);
+        templates.add(templateName);
+    }
+
     public void visit(
             Node node){
 
         node.apply(this);
+    }
+
+    public List<String> getDependentTemplates(){
+        return this.templates;
     }
 }

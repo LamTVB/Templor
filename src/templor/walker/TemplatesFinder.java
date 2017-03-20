@@ -12,7 +12,9 @@ import templor.structure.Template;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,6 +38,7 @@ public class TemplatesFinder
 
         Node templateDef = getTemplateDef(node.get_AddTemplate());
         Map<String, Object> currentAttributes = getAttributes(node.get_ParametersListOpt());
+        List<String> templateNames = new ArrayList<>();
 
         if(templateDef == null){
             throw new InterpreterException("Template cannot be null", node.get_TemplateName());
@@ -48,6 +51,7 @@ public class TemplatesFinder
             syntaxTree = new mino.language_mino.Parser(reader).parse();
             AttributeFinder engine = new AttributeFinder(currentAttributes);
             engine.visit(syntaxTree);
+            templateNames = engine.getDependentTemplates();
         }
         catch (IOException e) {
             System.err.println(e.getMessage());
@@ -63,7 +67,13 @@ public class TemplatesFinder
         }
 
         if(syntaxTree != null){
-            Template template = new Template(node.get_TemplateName().getText(), stringTemplateDef, currentAttributes, templateDef);
+            List<Template> integratedTemplates = new ArrayList<>();
+
+            for(String templateName : templateNames){
+                integratedTemplates.add(getTemplateByName(templateName));
+            }
+            Template template = new Template(node.get_TemplateName().getText(), stringTemplateDef,
+                    currentAttributes, templateDef, integratedTemplates);
             this.templates.put(node.get_TemplateName().getText(), template);
         }
     }
@@ -120,5 +130,15 @@ public class TemplatesFinder
 
     public Map<String, Template> getTemplates(){
         return this.templates;
+    }
+
+    public Template getTemplateByName(
+            String template_name){
+
+        if(this.templates.containsKey(template_name)){
+            return this.templates.get(template_name);
+        }else{
+            throw new InterpreterException("Template of name " + template_name + " is unknown", null);
+        }
     }
 }

@@ -4,6 +4,7 @@ import templor.exception.InterpreterException;
 import templor.language_templor.Node;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,16 +20,24 @@ public class Template {
 
     private Map<String, Object> _attributes = new HashMap<>();
 
+    private String returnName;
+
+    private Object returnValue;
+
+    private List<Template> _integratedTemplates;
+
     public Template(
             String name,
             String template_def,
             Map<String, Object> attributes,
-            Node nodeTemplateDef){
+            Node nodeTemplateDef,
+            List<Template> templates){
 
         this._templateName = name;
         this._templateDef = template_def;
         this._attributes = attributes;
         this._nodeTemplate = nodeTemplateDef;
+        this._integratedTemplates = templates;
     }
 
     public Node get_nodeTemplate(){return this._nodeTemplate;}
@@ -61,5 +70,13 @@ public class Template {
         }
 
         return null;
+    }
+
+    public List<Template> get_integratedTemplates(){
+        return this._integratedTemplates;
+    }
+
+    public String get_templateName(){
+        return this._templateName;
     }
 }
