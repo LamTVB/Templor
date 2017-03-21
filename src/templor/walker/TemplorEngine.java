@@ -105,7 +105,7 @@ public class TemplorEngine
 
         if(template != null){
             mino.language_mino.Node templateDef = parseTree(template);
-            this.interpreterEngine.visit(templateDef, template);
+            this.interpreterEngine.visit(templateDef);
         }else{
             throw new InterpreterException("Template to render cannot be null", node.get_Lp());
         }
@@ -151,9 +151,11 @@ public class TemplorEngine
             NTemplate_TemplateDef node) {
 
         String templateDef = formatTemplateDef(node.get_TemplateDef().getText());
+        Template template = this.templatesFinder.createAnonymousTemplate(node.get_TemplateDef());
 
-        Template template = new Template(null, templateDef, null, node.get_TemplateDef(), null);
-        this.tempTemplate = template;
+        if(template != null){
+            this.tempTemplate = template;
+        }
     }
 
     @Override
@@ -276,9 +278,17 @@ public class TemplorEngine
     }
 
     private String replaceTemplates(
-            Template templateToReplace){
+            Template templateToReplace,
+            String... template){
 
-        String templateDef = templateToReplace.get_templateDef();
+        String templateDef;
+
+        if(template != null && template.length > 0){
+            templateDef = template[0];
+        }else{
+            templateDef = templateToReplace.get_templateDef();
+        }
+
         List<Template> integratedTemplates = templateToReplace.get_integratedTemplates();
 
         if(integratedTemplates != null){
@@ -292,23 +302,4 @@ public class TemplorEngine
 
         return templateDef;
     }
-
-    private String replaceTemplates(
-            Template templateToReplace, String templateDef){
-
-        List<Template> integratedTemplates = templateToReplace.get_integratedTemplates();
-
-        if(integratedTemplates != null){
-            for(Template b_template : integratedTemplates){
-                if(b_template.get_templateDef() != null){
-                    String subTemplateDef = replaceAttributes(b_template);
-                    templateDef = templateDef.replaceAll("\\{"+ b_template.get_templateName() + "}", subTemplateDef);
-                }
-            }
-        }
-
-        return templateDef;
-    }
-
-
 }

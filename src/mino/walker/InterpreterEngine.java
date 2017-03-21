@@ -51,8 +51,6 @@ public class InterpreterEngine
 
     private FloatClassInfo floatClassInfo;
 
-    private Map<String, Object> attributes = new HashMap<>();
-
     public void visit(
             Node node) {
 

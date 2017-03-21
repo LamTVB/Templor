@@ -141,4 +141,45 @@ public class TemplatesFinder
             throw new InterpreterException("Template of name " + template_name + " is unknown", null);
         }
     }
+
+    public Template createAnonymousTemplate(NTemplateDef node){
+        List<String> templateNames = new ArrayList<>();
+
+        String stringTemplateDef = node.getText().replaceAll("<\\{"," ").replaceAll("}>", " ");
+        StringReader reader = new StringReader(stringTemplateDef);
+        mino.language_mino.Node syntaxTree = null;
+        try {
+            syntaxTree = new mino.language_mino.Parser(reader).parse();
+            AttributeFinder engine = new AttributeFinder(null);
+            engine.visit(syntaxTree);
+            templateNames = engine.getDependentTemplates();
+        }
+        catch (IOException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        }
+        catch (ParserException e) {
+            System.err.println("SYNTAX ERROR: " + e.getMessage() + ".");
+            System.exit(1);
+        }
+        catch (LexerException e) {
+            System.err.println("LEXICAL ERROR: " + e.getMessage() + ".");
+            System.exit(1);
+        }
+
+        Template template = null;
+
+        if(syntaxTree != null){
+            List<Template> integratedTemplates = new ArrayList<>();
+
+            for(String templateName : templateNames){
+                integratedTemplates.add(getTemplateByName(templateName));
+            }
+            template = new Template(null, stringTemplateDef,
+                    null, node, integratedTemplates);
+        }
+
+        return template;
+
+    }
 }
