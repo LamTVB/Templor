@@ -7,6 +7,7 @@ Lexer
     number = ('0'..'9')+;
     string = Shortest '"' string_char* '"';
     string_char = Any - (#10 | #13);
+    float = number '.' number;
 
 
     id = lower name_char*;
@@ -42,6 +43,7 @@ Parser
 
     template =
         {template_def:} template_def |
+        {file_path:} string |
         {template_name:} id;
 
     parameters_list_opt =
@@ -70,7 +72,8 @@ Parser
         {string:} string |
         {num:} number |
         {true:} 'true' |
-        {false:} 'false';
+        {false:} 'false' |
+        {float:} float;
 
 
 

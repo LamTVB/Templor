@@ -1,85 +1,138 @@
-classDefs()<{
+classDefs() <{
     class Object {
 
-      fun ==(obj) {
-        return self is obj;
-      }
+     fun ==(obj) {
+       return self is obj;
+     }
 
-      fun !=(obj){
-        return !(self == obj);
-      }
+     fun !=(obj){
+       return !(self == obj);
+     }
 
-      fun print(obj) {
-        obj.to_s().to_system_out();
-      }
+     fun print(obj) {
+       obj.to_s().to_system_out();
+     }
 
-      fun to_s() {
-        return null;
-      }
+     fun to_s() {
+       return null;
+     }
 
-      primitive abort(message);
+     primitive abort(message);
 
-      fun assert(cond,message) {
-        if (!cond) {
-          abort("assertion failed: " + message);
-        }
-      }
-    }
+     fun assert(cond,message) {
+       if (!cond) {
+         abort("assertion failed: " + message);
+       }
+     }
+   }
 
-    class Boolean {
+   class Boolean {
 
-      fun to_s() {
-        if(self) {
-          return "true";
-        }
-        return "false";
-      }
-    }
+     fun to_s() {
+       if(self) {
+         return "true";
+       }
+       return "false";
+     }
+   }
 
-    class Integer {
+   class Integer {
 
 
-      primitive +(i);
-      primitive *(i);
-      primitive %(i);
-      primitive -(i);
-      primitive to_s();
-      primitive /(i);
-    }
+     primitive +(i);
+     primitive *(i);
+     primitive %(i);
+     primitive -(i);
+     primitive to_s();
+     primitive /(i);
+   }
 
-    class String {
+   class String {
 
-      fun to_s() {
-        return self;
-      }
+     fun to_s() {
+       return self;
+     }
 
-      primitive +(s);
-      primitive to_system_out();
-    }
+     primitive +(s);
+     primitive to_system_out();
+   }
 
-    class Float{
-        primitive +(f);
-        primitive -(f);
-        primitive *(f);
-        primitive /(f);
-        primitive to_s();
-    }
+   class Float{
+       primitive +(f);
+       primitive -(f);
+       primitive *(f);
+       primitive /(f);
+       primitive to_s();
+   }
+
+   class A {
+     fun m() {
+       print("I'm in class A.");
+     }
+   }
+
+   class B {
+     fun m() {
+       print("I'm in class B.");
+     }
+   }
+
+   class Person {
+     var _name;
+     var _age;
+
+     /* method that plays the role of a constructor */
+     fun init(name, age) {
+       assert(!(name is null), "name must not be null");
+       assert(name isa String, "name must be a String");
+       assert(!(age is null), "age must not be null");
+       assert(age isa Integer, "age must be an Integer");
+       _name = name;
+       _age = age;
+       return self; /* to allow call chaining */
+     }
+
+     fun to_s() {
+       return "name: " + _name + ", age: " + _age.to_s();
+     }
+
+     fun <(person){
+        assert(person isa Person, "person must be a Person");
+        return _age < person.getAge();
+     }
+
+     fun getName(){
+       return _name;
+     }
+
+     fun getAge(){
+       return _age;
+     }
+   }
 }>;
 
 listingI(i)<{ {{i}} }>;
 
 humanName(name) <{ {{name}} }>;
-humanName.name = "Lâm";
+humanName.name = "Etienne";
 
 printer_two(i) <{ print({humanName}); }>;
-
+printerOverAge() <{ print("je suis majeur"); }>;
 
 render(classDefs);
 render(printer_two);
-render(<{
 
-i = 3.4;
-j = 2 + 4;
-print({humanName} + " " + j);
 
+render
+(<{
+    i = 3.4;
+    j = 2 + 4;
+    {printer_two}
+
+    while(i < 10){
+        i = i + 1;
+        {humanName}.name = i;
+        {printer_two}
+    }
 }>);
+

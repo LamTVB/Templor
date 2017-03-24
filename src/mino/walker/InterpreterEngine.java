@@ -23,6 +23,7 @@ import java.util.*;
 import mino.exception.*;
 import mino.language_mino.*;
 import mino.structure.*;
+import templor.structure.Template;
 
 public class InterpreterEngine
         extends Walker {
@@ -51,9 +52,19 @@ public class InterpreterEngine
 
     private FloatClassInfo floatClassInfo;
 
+    private Template _currentTemplate;
+
     public void visit(
             Node node) {
 
+        node.apply(this);
+    }
+
+    public void visit(
+            Node node,
+            Template templateExecute){
+
+        this._currentTemplate = templateExecute;
         node.apply(this);
     }
 
@@ -505,9 +516,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -598,9 +609,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -645,9 +656,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -968,6 +979,48 @@ public class InterpreterEngine
             NAdditionalExp node) {
 
         this.expList.add(node.get_Exp());
+    }
+
+    @Override
+    public void caseStm_Populate(
+            NStm_Populate node) {
+
+        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
+        String attributeName = node.get_Id().getText();
+        Instance exp = getExpEval(node.get_Exp());
+
+        Template template = this._currentTemplate.getTemplateByName(templateName);
+
+        if(template != null){
+            template.addOrUpdateAttribute(attributeName, exp);
+        }else{
+            throw new InterpreterException("Template of name : " + templateName + " does not exist", node.get_Template());
+        }
+    }
+
+    @Override
+    public void caseTerm_Interpolation(
+            NTerm_Interpolation node) {
+
+        String attributeName = node.get_Interpolation().getText().replaceAll("\\{\\{", "").replaceAll("}}","");
+        Object value = this._currentTemplate.getValue(attributeName);
+
+        if(value instanceof String){
+            this.expEval = this.stringClassInfo.newString((String)value);
+        }else if(value instanceof Integer){
+            this.expEval = this.integerClassInfo.newInteger((BigInteger)value);
+        }else if(value instanceof Float){
+            this.expEval = this.floatClassInfo.newFloat((Float)value);
+        }else if(value instanceof Instance){
+            this.expEval = (Instance)value;
+        }else if(value instanceof Boolean){
+            Boolean booleanValue = (Boolean)value;
+            this.expEval = booleanValue ? this.booleanClassInfo.getTrue() : this.booleanClassInfo.getFalse();
+        }else if(value == null){
+            throw new InterpreterException("Cannot find attribute of name : " + attributeName, node.get_Interpolation());
+        }else{
+            throw new InterpreterException("Error", node.get_Interpolation());
+        }
     }
 
     public void integerPlus(

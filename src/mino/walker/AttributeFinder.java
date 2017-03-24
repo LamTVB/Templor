@@ -1,10 +1,7 @@
 package mino.walker;
 
 import mino.exception.InterpreterException;
-import mino.language_mino.NInterpolation;
-import mino.language_mino.NTemplate;
-import mino.language_mino.Node;
-import mino.language_mino.Walker;
+import mino.language_mino.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,10 +37,18 @@ public class AttributeFinder
     }
 
     @Override
-    public void caseTemplate(
-            NTemplate node) {
+    public void caseStm_TemplateIntegration(
+            NStm_TemplateIntegration node) {
 
-        String templateName = node.getText().substring(1, node.getText().length() - 1);
+        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
+        templates.add(templateName);
+    }
+
+    @Override
+    public void caseTerm_Template(
+            NTerm_Template node) {
+
+        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
         templates.add(templateName);
     }
 

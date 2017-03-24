@@ -113,8 +113,9 @@ Parser
     {while:} 'while' [l_par:]'(' exp ')' '{' stms '}' |
     {if:} 'if' [l_par:]'(' exp ')' '{' stms '}' else_opt |
     {return:} [return_kwd:]'return' exp_opt ';' |
-    {interpolation:} interpolation |
-    {template_integration:} template;
+    {interpolation:} interpolation|
+    {template_integration:} template|
+    {populate:} template '.' id '=' exp ';';
 
   exp_opt =
     {one:} exp |

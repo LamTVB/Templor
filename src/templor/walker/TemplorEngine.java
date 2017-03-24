@@ -23,7 +23,6 @@ public class TemplorEngine
 
     private Map<String, Template> templates = new HashMap<>();
 
-    //contains the syntax tree already parse to be interpreted
     private Template tempTemplate = null;
     private Object expVal;
 
@@ -105,7 +104,7 @@ public class TemplorEngine
 
         if(template != null){
             mino.language_mino.Node templateDef = parseTree(template);
-            this.interpreterEngine.visit(templateDef);
+            this.interpreterEngine.visit(templateDef, template);
         }else{
             throw new InterpreterException("Template to render cannot be null", node.get_Lp());
         }
@@ -150,26 +149,22 @@ public class TemplorEngine
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        String templateDef = formatTemplateDef(node.get_TemplateDef().getText());
         Template template = this.templatesFinder.createAnonymousTemplate(node.get_TemplateDef());
-
-        if(template != null){
-            this.tempTemplate = template;
-        }
+        this.tempTemplate = template;
     }
 
     @Override
     public void caseExp_False(
             NExp_False node) {
 
-        this.expVal = false;
+        this.expVal = Boolean.FALSE;
     }
 
     @Override
     public void caseExp_True(
             NExp_True node) {
 
-        this.expVal = true;
+        this.expVal = Boolean.TRUE;
     }
 
     @Override
@@ -187,27 +182,9 @@ public class TemplorEngine
     }
 
     private mino.language_mino.Node parseTree(
-            Node nodeToParse){
-
-
-        String template = formatTemplateDef(nodeToParse.getText());
-        StringReader reader = new StringReader(template);
-        mino.language_mino.Node syntaxTree = null;
-        try {
-            syntaxTree = new Parser(reader).parse();
-        }
-        catch (LexerException | IOException | ParserException e) {
-            e.printStackTrace();
-        }
-
-        return syntaxTree;
-    }
-
-    private mino.language_mino.Node parseTree(
             Template templateToParse){
 
-        String templateDef = replaceAttributes(templateToParse);
-        templateDef = this.replaceTemplates(templateToParse, templateDef);
+        String templateDef = this.replaceTemplates(templateToParse);
 
         if(templateDef == null){
             throw new InterpreterException("Template def is null", null);
@@ -250,51 +227,17 @@ public class TemplorEngine
         return expression;
     }
 
-    private Template getTemplateByName(
-            String name){
-
-        if(this.templates.containsKey(name)){
-            return this.templates.get(name);
-        }else{
-            throw new InterpreterException("Template of name " + name + " does not exit", null);
-        }
-    }
-
-    private String replaceAttributes(
+    private String replaceTemplates(
             Template templateToReplace){
 
         String templateDef = templateToReplace.get_templateDef();
-        Map<String, Object> attributes = templateToReplace.get_attributes();
-
-        if(attributes != null && templateDef != null){
-            for(Map.Entry<String, Object> attribute : attributes.entrySet()){
-                if(attribute.getValue() != null){
-                    templateDef = templateDef.replaceAll("\\{\\{"+attribute.getKey()+"}}", attribute.getValue().toString());
-                }
-            }
-        }
-
-        return templateDef;
-    }
-
-    private String replaceTemplates(
-            Template templateToReplace,
-            String... template){
-
-        String templateDef;
-
-        if(template != null && template.length > 0){
-            templateDef = template[0];
-        }else{
-            templateDef = templateToReplace.get_templateDef();
-        }
-
         List<Template> integratedTemplates = templateToReplace.get_integratedTemplates();
 
         if(integratedTemplates != null){
             for(Template b_template : integratedTemplates){
                 if(b_template.get_templateDef() != null){
-                    String subTemplateDef = replaceAttributes(b_template);
+
+                    String subTemplateDef = replaceTemplates(b_template);
                     templateDef = templateDef.replaceAll("\\{"+ b_template.get_templateName() + "}", subTemplateDef);
                 }
             }

@@ -79,4 +79,39 @@ public class Template {
     public String get_templateName(){
         return this._templateName;
     }
+
+    public Template getTemplateByName(
+            String name){
+
+        if(this._templateName != null && this._templateName.equals(name)){
+            return this;
+        }else{
+            for(Template b_template : this._integratedTemplates){
+                Template found = b_template.getTemplateByName(name);
+                if(found != null){
+                    return found;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public Object getValue(
+            String name){
+
+        if(_attributes != null && _attributes.containsKey(name)){
+            return _attributes.get(name);
+        }else{
+            for(Template b_template : this._integratedTemplates){
+                Object value = b_template.getValue(name);
+
+                if(value != null){
+                    return value;
+                }
+            }
+        }
+
+        return null;
+    }
 }
