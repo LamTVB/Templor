@@ -10,8 +10,7 @@ import templor.language_templor.Node;
 import templor.language_templor.Walker;
 import templor.structure.Template;
 
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,9 +42,35 @@ public class TemplatesFinder
         if(templateDef == null){
             throw new InterpreterException("Template cannot be null", node.get_TemplateName());
         }
+        String stringTemplateDef = templateDef.getText();
+        Reader reader = null;
+        BufferedReader br = null;
 
-        String stringTemplateDef = templateDef.getText().replaceAll("<\\{"," ").replaceAll("}>", " ");
-        StringReader reader = new StringReader(stringTemplateDef);
+        if(!stringTemplateDef.contains("<{")){
+            try {
+                reader = new FileReader(stringTemplateDef.replaceAll("\"", ""));
+                br = new BufferedReader(reader);
+                StringBuilder sb = new StringBuilder();
+                try {
+                    String line = br.readLine();
+                    while(line != null){
+                        sb.append(line);
+                        line = br.readLine();
+                    }
+                    stringTemplateDef = sb.toString();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            catch (FileNotFoundException e) {
+                throw new InterpreterException("Cannot find file of at path : " + stringTemplateDef, node.get_TemplateName());
+            }
+        }else{
+            stringTemplateDef = stringTemplateDef.replaceAll("<\\{"," ").replaceAll("}>", " ");
+            reader = new StringReader(stringTemplateDef);
+        }
+
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
@@ -66,12 +91,15 @@ public class TemplatesFinder
             System.exit(1);
         }
 
+
+
         if(syntaxTree != null){
             List<Template> integratedTemplates = new ArrayList<>();
 
             for(String templateName : templateNames){
                 integratedTemplates.add(getTemplateByName(templateName));
             }
+
             Template template = new Template(node.get_TemplateName().getText(), stringTemplateDef,
                     currentAttributes, templateDef, integratedTemplates);
             this.templates.put(node.get_TemplateName().getText(), template);
@@ -107,6 +135,12 @@ public class TemplatesFinder
         }
     }
 
+    @Override
+    public void caseTemplate_FilePath(
+            NTemplate_FilePath node) {
+
+        this.template = node.get_String();
+    }
 
     private Map<String, Object> getAttributes(
             Node node){
