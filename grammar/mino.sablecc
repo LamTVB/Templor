@@ -106,7 +106,7 @@ Parser
     {mult:} [mult:] '*';
 
   stm =
-    {var_assign:} id '=' exp ';' |
+    {var_assign:} id array_opt '=' exp ';' |
     {field_assign:} field_name '=' exp ';' |
     {call:} call ';' |
     {self_call:} self_call ';' |
@@ -115,7 +115,11 @@ Parser
     {return:} [return_kwd:]'return' exp_opt ';' |
     {interpolation:} interpolation|
     {template_integration:} template|
-    {populate:} template '.' id '=' exp ';';
+    {populate:} template '.' id '=' exp ';' |
+    {foreach:} 'foreach' [l_par:]'(' id 'in' [array_name:]id ')' '{' stms '}';
+
+  array_opt =
+    '[]' | ;
 
   exp_opt =
     {one:} exp |
@@ -172,7 +176,8 @@ Parser
     {false:} 'false' |
     {string:} string |
     {interpolation:} interpolation |
-    {template:} template;
+    {template:} template |
+    {array:} '[' exp_list_opt ']';
 
   call =
     right_unary_exp '.' id '(' exp_list_opt ')';

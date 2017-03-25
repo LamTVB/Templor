@@ -52,6 +52,8 @@ public class InterpreterEngine
 
     private FloatClassInfo floatClassInfo;
 
+    private ArrayClassInfo arrayClassInfo;
+
     private Template _currentTemplate;
 
     public void visit(
@@ -188,6 +190,13 @@ public class InterpreterEngine
 
             if(this.floatClassInfo == null){
                 throw new InterpreterException("class Float was not defined", null);
+            }
+
+            this.arrayClassInfo = (ArrayClassInfo) this.classTable
+                    .getArrayClassInfoOrNull();
+
+            if(this.arrayClassInfo == null){
+                throw new InterpreterException("class Array was not defined", null);
             }
 
             // create initial Object instance
@@ -1008,7 +1017,7 @@ public class InterpreterEngine
         if(value instanceof String){
             this.expEval = this.stringClassInfo.newString((String)value);
         }else if(value instanceof Integer){
-            this.expEval = this.integerClassInfo.newInteger((BigInteger)value);
+            this.expEval = this.integerClassInfo.newInteger(BigInteger.valueOf((Integer)value));
         }else if(value instanceof Float){
             this.expEval = this.floatClassInfo.newFloat((Float)value);
         }else if(value instanceof Instance){
@@ -1020,6 +1029,38 @@ public class InterpreterEngine
             throw new InterpreterException("Cannot find attribute of name : " + attributeName, node.get_Interpolation());
         }else{
             throw new InterpreterException("Error", node.get_Interpolation());
+        }
+    }
+
+    @Override
+    public void caseTerm_Array(
+            NTerm_Array node) {
+
+        List<NExp> expList = getExpList(node.get_ExpListOpt());
+        List<Instance> valueList = new ArrayList<>();
+
+        for (NExp exp : expList) {
+            valueList.add(getExpEval(exp));
+        }
+
+        this.expEval = this.arrayClassInfo.newArray(valueList);
+    }
+
+    @Override
+    public void caseStm_Foreach(
+            NStm_Foreach node) {
+
+        Instance right = this.currentFrame.getVar(node.get_ArrayName());
+
+        if(!right.isa(this.arrayClassInfo)){
+            throw new InterpreterException("Right parameter must be an array", node.get_ArrayName());
+        }
+
+        List<Instance> values = ((ArrayInstance)right).getValue();
+        for(Instance b_instance : values){
+
+            this.currentFrame.setVar(node.get_Id(), b_instance);
+            visit(node.get_Stms());
         }
     }
 
