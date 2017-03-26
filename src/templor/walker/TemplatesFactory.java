@@ -44,31 +44,12 @@ public class TemplatesFactory
         }
         String stringTemplateDef = templateDef.getText();
         Reader reader = null;
-        BufferedReader br = null;
 
-        if(!stringTemplateDef.contains("<{")){
-            try {
-                reader = new FileReader(stringTemplateDef.replaceAll("\"", ""));
-                br = new BufferedReader(reader);
-                StringBuilder sb = new StringBuilder();
-                try {
-                    String line = br.readLine();
-                    while(line != null){
-                        sb.append(line);
-                        line = br.readLine();
-                    }
-                    stringTemplateDef = sb.toString();
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            catch (FileNotFoundException e) {
-                throw new InterpreterException("Cannot find file of at path : " + stringTemplateDef, node.get_TemplateName());
-            }
-        }else{
-            stringTemplateDef = stringTemplateDef.replaceAll("<\\{"," ").replaceAll("}>", " ");
-            reader = new StringReader(stringTemplateDef);
+        try {
+            reader = getTemplateReader(stringTemplateDef);
+        }
+        catch (IOException e) {
+            throw new InterpreterException(e.getMessage(), node.get_TemplateName());
         }
 
         mino.language_mino.Node syntaxTree = null;
@@ -215,5 +196,31 @@ public class TemplatesFactory
 
         return template;
 
+    }
+
+    public Reader getTemplateReader(
+            String templateDefinition)
+            throws IOException {
+
+        Reader reader;
+        BufferedReader br = null;
+
+        if(!templateDefinition.contains("<{")){
+            reader = new FileReader(templateDefinition.replaceAll("\"", ""));
+            br = new BufferedReader(reader);
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while(line != null){
+                sb.append(line);
+                line = br.readLine();
+            }
+            templateDefinition = sb.toString();
+        }else{
+            templateDefinition = templateDefinition.replaceAll("<\\{"," ").replaceAll("}>", " ");
+        }
+
+        reader = new StringReader(templateDefinition);
+        return reader;
     }
 }
