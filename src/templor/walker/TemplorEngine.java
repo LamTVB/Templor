@@ -26,7 +26,7 @@ public class TemplorEngine
     private Template tempTemplate = null;
     private Object expVal;
 
-    private TemplatesFinder templatesFinder = new TemplatesFinder();
+    private TemplatesFactory templatesFactory = new TemplatesFactory();
     private final InterpreterEngine interpreterEngine = new InterpreterEngine();
 
     public void visit(Node node){
@@ -37,8 +37,8 @@ public class TemplorEngine
     public void caseProgram(
             NProgram node) {
 
-        templatesFinder.visit(node);
-        this.templates = templatesFinder.getTemplates();
+        templatesFactory.visit(node);
+        this.templates = templatesFactory.getTemplates();
         node.applyOnChildren(this);
     }
 
@@ -149,7 +149,7 @@ public class TemplorEngine
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        Template template = this.templatesFinder.createAnonymousTemplate(node.get_TemplateDef());
+        Template template = this.templatesFactory.createAnonymousTemplate(node.get_TemplateDef());
         this.tempTemplate = template;
     }
 

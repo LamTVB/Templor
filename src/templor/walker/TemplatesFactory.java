@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Created by Lam on 24/02/2017.
  */
-public class TemplatesFinder
+public class TemplatesFactory
         extends Walker {
 
     private Map<String, Template> templates = new HashMap<>();
@@ -83,11 +83,11 @@ public class TemplatesFinder
             System.exit(1);
         }
         catch (ParserException e) {
-            System.err.println("SYNTAX ERROR: " + e.getMessage() + ".");
+            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of template :" + node.get_TemplateName().getText());
             System.exit(1);
         }
         catch (LexerException e) {
-            System.err.println("LEXICAL ERROR: " + e.getMessage() + ".");
+            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of template :" + node.get_TemplateName().getText());
             System.exit(1);
         }
 
