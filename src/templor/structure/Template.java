@@ -20,10 +20,6 @@ public class Template {
 
     private Map<String, Object> _attributes = new HashMap<>();
 
-    private String returnName;
-
-    private Object returnValue;
-
     private List<Template> _integratedTemplates;
 
     public Template(
