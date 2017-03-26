@@ -11,13 +11,13 @@ import java.util.Map;
 /**
  * Created by Lam on 14/03/2017.
  */
-public class AttributeFinder
+public class TemplorFinder
         extends Walker{
 
     private final Map<String, Object> attributes;
     private final List<String> templates = new ArrayList<>();
 
-    public AttributeFinder(
+    public TemplorFinder(
             Map<String, Object> attributes){
 
         this.attributes = attributes;
@@ -31,7 +31,7 @@ public class AttributeFinder
                 .replaceAll("}}", "");
 
         if(!this.attributes.containsKey(name)){
-            //TODO gérer pour cactch l'erreur dans le visiteur TemplatesFinder
+            //TODO gérer pour cactch l'erreur dans le visiteur TemplatesFactory
             throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
         }
     }

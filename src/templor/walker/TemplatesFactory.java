@@ -3,7 +3,7 @@ package templor.walker;
 import mino.language_mino.LexerException;
 import mino.language_mino.ParserException;
 
-import mino.walker.AttributeFinder;
+import mino.walker.TemplorFinder;
 import templor.exception.InterpreterException;
 import templor.language_templor.*;
 import templor.language_templor.Node;
@@ -55,7 +55,7 @@ public class TemplatesFactory
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            AttributeFinder engine = new AttributeFinder(currentAttributes);
+            TemplorFinder engine = new TemplorFinder(currentAttributes);
             engine.visit(syntaxTree);
             templateNames = engine.getDependentTemplates();
         }
@@ -165,7 +165,7 @@ public class TemplatesFactory
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            AttributeFinder engine = new AttributeFinder(null);
+            TemplorFinder engine = new TemplorFinder(null);
             engine.visit(syntaxTree);
             templateNames = engine.getDependentTemplates();
         }
