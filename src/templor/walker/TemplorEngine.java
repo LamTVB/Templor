@@ -196,6 +196,7 @@ public class TemplorEngine
         }
         catch (LexerException | IOException | ParserException e) {
             e.printStackTrace();
+            System.exit(0);
         }
 
         return syntaxTree;
@@ -230,11 +231,11 @@ public class TemplorEngine
     private String replaceTemplates(
             Template templateToReplace){
 
-        String templateDef = templateToReplace.get_templateDef();
-        List<Template> integratedTemplates = templateToReplace.get_integratedTemplates();
+        String templateDef = this.formatTemplateDef(templateToReplace.get_templateDef());
+        List<Template> subTemplates = templateToReplace.get_integratedTemplates();
 
-        if(integratedTemplates != null){
-            for(Template b_template : integratedTemplates){
+        if(subTemplates != null){
+            for(Template b_template : subTemplates){
                 if(b_template.get_templateDef() != null){
 
                     String subTemplateDef = replaceTemplates(b_template);
