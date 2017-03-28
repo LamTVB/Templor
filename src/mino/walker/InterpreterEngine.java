@@ -23,6 +23,7 @@ import java.util.*;
 import mino.exception.*;
 import mino.language_mino.*;
 import mino.structure.*;
+import templor.structure.Template;
 
 public class InterpreterEngine
         extends Walker {
@@ -51,9 +52,21 @@ public class InterpreterEngine
 
     private FloatClassInfo floatClassInfo;
 
+    private ArrayClassInfo arrayClassInfo;
+
+    private Template _currentTemplate;
+
     public void visit(
             Node node) {
 
+        node.apply(this);
+    }
+
+    public void visit(
+            Node node,
+            Template templateExecute){
+
+        this._currentTemplate = templateExecute;
         node.apply(this);
     }
 
@@ -141,47 +154,57 @@ public class InterpreterEngine
     public void caseFile(
             NFile node) {
 
-        // collect class, field and method definitions
-        visit(node.get_Classdefs());
+        if(this.objectClassInfo == null || this.booleanClassInfo == null || this.integerClassInfo == null || this.floatClassInfo == null || this.stringClassInfo == null){
+            // collect class, field and method definitions
+            visit(node.get_Classdefs());
 
-        // handle compiler-known classes
-        this.objectClassInfo = this.classTable.getObjectClassInfoOrNull();
-        if (this.objectClassInfo == null) {
-            throw new InterpreterException("class Object is not defined", null);
+            // handle compiler-known classes
+
+            this.objectClassInfo = this.classTable.getObjectClassInfoOrNull();
+            if (this.objectClassInfo == null) {
+                throw new InterpreterException("class Object is not defined", null);
+            }
+
+            this.booleanClassInfo = (BooleanClassInfo) this.classTable
+                    .getBooleanClassInfoOrNull();
+            if (this.booleanClassInfo == null) {
+                throw new InterpreterException("class Boolean was not defined",
+                        null);
+            }
+
+            this.integerClassInfo = (IntegerClassInfo) this.classTable
+                    .getIntegerClassInfoOrNull();
+            if (this.integerClassInfo == null) {
+                throw new InterpreterException("class Integer was not defined",
+                        null);
+            }
+
+            this.stringClassInfo = (StringClassInfo) this.classTable
+                    .getStringClassInfoOrNull();
+            if (this.stringClassInfo == null) {
+                throw new InterpreterException("class String was not defined", null);
+            }
+
+            this.floatClassInfo =(FloatClassInfo) this.classTable
+                    .getFloatClassInfoOrNull();
+
+            if(this.floatClassInfo == null){
+                throw new InterpreterException("class Float was not defined", null);
+            }
+
+            this.arrayClassInfo = (ArrayClassInfo) this.classTable
+                    .getArrayClassInfoOrNull();
+
+            if(this.arrayClassInfo == null){
+                throw new InterpreterException("class Array was not defined", null);
+            }
+
+            // create initial Object instance
+            Instance instance = this.objectClassInfo.newInstance();
+
+            // create initial frame
+            this.currentFrame = new Frame(null, instance, null);
         }
-
-        this.booleanClassInfo = (BooleanClassInfo) this.classTable
-                .getBooleanClassInfoOrNull();
-        if (this.booleanClassInfo == null) {
-            throw new InterpreterException("class Boolean was not defined",
-                    null);
-        }
-
-        this.integerClassInfo = (IntegerClassInfo) this.classTable
-                .getIntegerClassInfoOrNull();
-        if (this.integerClassInfo == null) {
-            throw new InterpreterException("class Integer was not defined",
-                    null);
-        }
-
-        this.stringClassInfo = (StringClassInfo) this.classTable
-                .getStringClassInfoOrNull();
-        if (this.stringClassInfo == null) {
-            throw new InterpreterException("class String was not defined", null);
-        }
-
-        this.floatClassInfo =(FloatClassInfo) this.classTable
-                .getFloatClassInfoOrNull();
-
-        if(this.floatClassInfo == null){
-            throw new InterpreterException("class Float was not defined", null);
-        }
-
-        // create initial Object instance
-        Instance instance = this.objectClassInfo.newInstance();
-
-        // create initial frame
-        this.currentFrame = new Frame(null, instance, null);
 
         // execute statements
         visit(node.get_Stms());
@@ -502,9 +525,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -595,9 +618,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -642,9 +665,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -967,6 +990,80 @@ public class InterpreterEngine
         this.expList.add(node.get_Exp());
     }
 
+    @Override
+    public void caseStm_Populate(
+            NStm_Populate node) {
+
+        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
+        String attributeName = node.get_Id().getText();
+        Instance exp = getExpEval(node.get_Exp());
+
+        Template template = this._currentTemplate.getTemplateByName(templateName);
+
+        if(template != null){
+            template.addOrUpdateAttribute(attributeName, exp);
+        }else{
+            throw new InterpreterException("Template of name : " + templateName + " does not exist", node.get_Template());
+        }
+    }
+
+    @Override
+    public void caseTerm_Interpolation(
+            NTerm_Interpolation node) {
+
+        String attributeName = node.get_Interpolation().getText().replaceAll("\\{\\{", "").replaceAll("}}","");
+        Object value = this._currentTemplate.getValue(attributeName);
+
+        if(value instanceof String){
+            this.expEval = this.stringClassInfo.newString((String)value);
+        }else if(value instanceof Integer){
+            this.expEval = this.integerClassInfo.newInteger(BigInteger.valueOf((Integer)value));
+        }else if(value instanceof Float){
+            this.expEval = this.floatClassInfo.newFloat((Float)value);
+        }else if(value instanceof Instance){
+            this.expEval = (Instance)value;
+        }else if(value instanceof Boolean){
+            Boolean booleanValue = (Boolean)value;
+            this.expEval = booleanValue ? this.booleanClassInfo.getTrue() : this.booleanClassInfo.getFalse();
+        }else if(value == null){
+            throw new InterpreterException("Cannot find attribute of name : " + attributeName, node.get_Interpolation());
+        }else{
+            throw new InterpreterException("Error", node.get_Interpolation());
+        }
+    }
+
+    @Override
+    public void caseTerm_Array(
+            NTerm_Array node) {
+
+        List<NExp> expList = getExpList(node.get_ExpListOpt());
+        List<Instance> valueList = new ArrayList<>();
+
+        for (NExp exp : expList) {
+            valueList.add(getExpEval(exp));
+        }
+
+        this.expEval = this.arrayClassInfo.newArray(valueList);
+    }
+
+    @Override
+    public void caseStm_Foreach(
+            NStm_Foreach node) {
+
+        Instance right = this.currentFrame.getVar(node.get_ArrayName());
+
+        if(!right.isa(this.arrayClassInfo)){
+            throw new InterpreterException("Right parameter must be an array", node.get_ArrayName());
+        }
+
+        List<Instance> values = ((ArrayInstance)right).getValue();
+        for(Instance b_instance : values){
+
+            this.currentFrame.setVar(node.get_Id(), b_instance);
+            visit(node.get_Stms());
+        }
+    }
+
     public void integerPlus(
             MethodInfo methodInfo) {
 
@@ -1252,3 +1349,4 @@ public class InterpreterEngine
                 .getValue().toString()));
     }
 }
+

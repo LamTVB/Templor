@@ -1,0 +1,38 @@
+graph G {
+ 1 [label="T_Program"];
+ 2 [label="T_Stms_More"];
+ 1 -- 2;
+ 3 [label="T_Stms_More"];
+ 2 -- 3;
+ 4 [label="T_Stms_Zero"];
+ 3 -- 4;
+ 5 [label="T_Stm_Create"];
+ 3 -- 5;
+ 6 [shape=rect,label="T_Id: i"];
+ 5 -- 6;
+ 7 [shape=rect,label="TAnonymous: :="];
+ 5 -- 7;
+ 8 [label="T_Template_TemplateDef"];
+ 5 -- 8;
+ 9 [shape=rect,label="T_TemplateDef: <{
+    i = 1;
+    print i;
+}>"];
+ 8 -- 9;
+ 10 [shape=rect,label="TAnonymous: ;"];
+ 5 -- 10;
+ 11 [label="T_Stm_Print"];
+ 2 -- 11;
+ 12 [shape=rect,label="TAnonymous: print"];
+ 11 -- 12;
+ 13 [shape=rect,label="TAnonymous: ("];
+ 11 -- 13;
+ 14 [label="T_Template_TemplateName"];
+ 11 -- 14;
+ 15 [shape=rect,label="T_Id: i"];
+ 14 -- 15;
+ 16 [shape=rect,label="TAnonymous: )"];
+ 11 -- 16;
+ 17 [shape=rect,label="TAnonymous: ;"];
+ 11 -- 17;
+}

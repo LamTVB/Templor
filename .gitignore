@@ -5,4 +5,5 @@ grammar/mino.sablecc3
 .project
 mino.iml
 sablecc.jar
-
+src/templor/language_templor
+out/

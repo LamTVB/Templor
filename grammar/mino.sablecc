@@ -23,6 +23,8 @@ Lexer
   class_name = upper name_char*;
   field_name = '_' lower name_char*;
   invalid_id = ('_' | lower | upper)+;
+  interpolation = '{{' id '}}';
+  template = '{' id '}';
 
   name_char = upper | lower | '_';
   upper = 'A'..'Z';
@@ -104,13 +106,20 @@ Parser
     {mult:} [mult:] '*';
 
   stm =
-    {var_assign:} id '=' exp ';' |
+    {var_assign:} id array_opt '=' exp ';' |
     {field_assign:} field_name '=' exp ';' |
     {call:} call ';' |
     {self_call:} self_call ';' |
     {while:} 'while' [l_par:]'(' exp ')' '{' stms '}' |
     {if:} 'if' [l_par:]'(' exp ')' '{' stms '}' else_opt |
-    {return:} [return_kwd:]'return' exp_opt ';';
+    {return:} [return_kwd:]'return' exp_opt ';' |
+    {interpolation:} interpolation|
+    {template_integration:} template|
+    {populate:} template '.' id '=' exp ';' |
+    {foreach:} 'foreach' [l_par:]'(' id 'in' [array_name:]id ')' '{' stms '}';
+
+  array_opt =
+    '[]' | ;
 
   exp_opt =
     {one:} exp |
@@ -165,7 +174,10 @@ Parser
     {self:} 'self' |
     {true:} 'true' |
     {false:} 'false' |
-    {string:} string;
+    {string:} string |
+    {interpolation:} interpolation |
+    {template:} template |
+    {array:} '[' exp_list_opt ']';
 
   call =
     right_unary_exp '.' id '(' exp_list_opt ')';

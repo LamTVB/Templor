@@ -48,6 +48,8 @@ public class ClassTable {
             classInfo = new StringClassInfo(this, definition);
         }else if(name.equals("Float")){
             classInfo = new FloatClassInfo(this, definition);
+        }else if(name.equals("Array")){
+            classInfo = new ArrayClassInfo(this, definition);
         }
         else {
             classInfo = new ClassInfo(this, definition);
@@ -91,5 +93,9 @@ public class ClassTable {
 
     public ClassInfo getFloatClassInfoOrNull(){
         return this.nameToClassInfoMap.get("Float");
+    }
+
+    public ClassInfo getArrayClassInfoOrNull(){
+        return this.nameToClassInfoMap.get("Array");
     }
 }
