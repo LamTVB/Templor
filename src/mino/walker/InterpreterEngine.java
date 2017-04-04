@@ -919,6 +919,18 @@ public class InterpreterEngine
     }
 
     @Override
+    public void caseTerm_Template(
+            NTerm_Template node) {
+
+        Template oldTemplate = this._currentTemplate;
+        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
+        Template subTemplate = this._currentTemplate.getTemplate(templateName);
+        this._currentTemplate = subTemplate;
+        this.expEval = getExpEval(subTemplate.get_parsedTemplate());
+        this._currentTemplate = oldTemplate;
+    }
+
+    @Override
     public void caseCall(
             NCall node) {
 
@@ -1008,10 +1020,10 @@ public class InterpreterEngine
     }
 
     @Override
-    public void caseTerm_Interpolation(
-            NTerm_Interpolation node) {
+    public void caseInterpolation(
+            NInterpolation node) {
 
-        String attributeName = node.get_Interpolation().getText().replaceAll("\\{\\{", "").replaceAll("}}","");
+        String attributeName = node.getText().replaceAll("\\{\\{", "").replaceAll("}}","");
         Object value = this._currentTemplate.getValue(attributeName);
 
         if(value instanceof String){
@@ -1026,10 +1038,21 @@ public class InterpreterEngine
             Boolean booleanValue = (Boolean)value;
             this.expEval = booleanValue ? this.booleanClassInfo.getTrue() : this.booleanClassInfo.getFalse();
         }else if(value == null){
-            throw new InterpreterException("Cannot find attribute of name : " + attributeName, node.get_Interpolation());
+            throw new InterpreterException("Cannot find attribute of name : " + attributeName + " in template " + this._currentTemplate.get_templateName(), node);
         }else{
-            throw new InterpreterException("Error", node.get_Interpolation());
+            throw new InterpreterException("Error", node);
         }
+    }
+
+    @Override
+    public void caseStm_TemplateIntegration(
+            NStm_TemplateIntegration node) {
+
+        Template oldTemplate = this._currentTemplate;
+        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
+        this._currentTemplate = this._currentTemplate.getTemplate(templateName);
+        visit(this._currentTemplate.get_parsedTemplate());
+        this._currentTemplate = oldTemplate;
     }
 
     @Override
