@@ -184,7 +184,8 @@ public class TemplorEngine
     private mino.language_mino.Node parseTree(
             Template templateToParse){
 
-        String templateDef = this.replaceTemplates(templateToParse);
+//        String templateDef = this.replaceTemplates(templateToParse);
+        String templateDef = templateToParse.get_templateDef().replaceAll("<\\{"," ").replaceAll("}>", " ");
 
         if(templateDef == null){
             throw new InterpreterException("Template def is null", null);

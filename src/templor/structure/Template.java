@@ -1,7 +1,7 @@
 package templor.structure;
 
+import mino.language_mino.Node;
 import templor.exception.InterpreterException;
-import templor.language_templor.Node;
 
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +16,7 @@ public class Template {
 
     private String _templateDef;
 
-    private Node _nodeTemplate;
+    private Node _parsedTemplate;
 
     private Map<String, Object> _attributes = new HashMap<>();
 
@@ -32,17 +32,14 @@ public class Template {
         this._templateName = name;
         this._templateDef = template_def;
         this._attributes = attributes;
-        this._nodeTemplate = nodeTemplateDef;
+        this._parsedTemplate = nodeTemplateDef;
         this._integratedTemplates = templates;
     }
 
-    public Node get_nodeTemplate(){return this._nodeTemplate;}
+    public Node get_parsedTemplate(){return this._parsedTemplate;}
 
     public String get_templateDef(){
         return this._templateDef;
-    }
-    public void set_templateDef(String templateDef){
-        this._templateDef = templateDef;
     }
 
     public void addOrUpdateAttribute(
@@ -76,14 +73,14 @@ public class Template {
         return this._templateName;
     }
 
-    public Template getTemplateByName(
+    public Template getTemplate(
             String name){
 
         if(this._templateName != null && this._templateName.equals(name)){
             return this;
         }else{
             for(Template b_template : this._integratedTemplates){
-                Template found = b_template.getTemplateByName(name);
+                Template found = b_template.getTemplate(name);
                 if(found != null){
                     return found;
                 }
@@ -98,14 +95,6 @@ public class Template {
 
         if(_attributes != null && _attributes.containsKey(name)){
             return _attributes.get(name);
-        }else{
-            for(Template b_template : this._integratedTemplates){
-                Object value = b_template.getValue(name);
-
-                if(value != null){
-                    return value;
-                }
-            }
         }
 
         return null;

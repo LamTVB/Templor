@@ -998,7 +998,7 @@ public class InterpreterEngine
         String attributeName = node.get_Id().getText();
         Instance exp = getExpEval(node.get_Exp());
 
-        Template template = this._currentTemplate.getTemplateByName(templateName);
+        Template template = this._currentTemplate.getTemplate(templateName);
 
         if(template != null){
             template.addOrUpdateAttribute(attributeName, exp);

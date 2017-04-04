@@ -120,25 +120,25 @@ listingI(i)<{ {{i}} }>;
 humanName(name) <{ {{name}} }>;
 humanName.name = "Etienne";
 
-printer_two(i) <{ print({humanName}); }>;
+printName(i) <{ print({humanName}); }>;
 printerOverAge() <{ print("je suis majeur"); }>;
-
-render(classDefs);
-
-render
-(<{
+test() <{
     i = 3.4;
     j = 2 + 4;
 
-    first_person = new Person.init("Etienne", 24);
-    second_person = new Person.init("Jacques", 26);
-    third_person = new Person.init("Pierre", 27);
+     first_person = new Person.init("Etienne", 24);
+     second_person = new Person.init("Jacques", 26);
+     third_person = new Person.init("Pierre", 27);
 
-    persons[] = [first_person, second_person, third_person];
+     persons[] = [first_person, second_person, third_person];
 
-    foreach(person in persons){
-        {humanName}.name = person.getName();
-        {printer_two}
-    }
-}>);
+     foreach(person in persons){
+         {humanName}.name = person.getName();
+         {printName}
+     }
+}>;
+
+render(classDefs);
+render(test);
+
 

@@ -25,7 +25,7 @@ public class TemplatesFactory
     private Map<String, Template> templates = new HashMap<>();
     private Map<String, Object> templateAttributes = new HashMap<>();
 
-    private Node template;
+    private String templateDef;
 
     public void visit(Node node){
         node.apply(this);
@@ -35,18 +35,17 @@ public class TemplatesFactory
     public void caseStm_Create(
             NStm_Create node) {
 
-        Node templateDef = getTemplateDef(node.get_AddTemplate());
+        String templateDef = getTemplateDef(node.get_AddTemplate());
         Map<String, Object> currentAttributes = getAttributes(node.get_ParametersListOpt());
         List<String> templateNames = new ArrayList<>();
 
         if(templateDef == null){
             throw new InterpreterException("Template cannot be null", node.get_TemplateName());
         }
-        String stringTemplateDef = templateDef.getText();
         Reader reader = null;
 
         try {
-            reader = getTemplateReader(stringTemplateDef);
+            reader = getTemplateReader(templateDef);
         }
         catch (IOException e) {
             throw new InterpreterException(e.getMessage(), node.get_TemplateName());
@@ -64,11 +63,11 @@ public class TemplatesFactory
             System.exit(1);
         }
         catch (ParserException e) {
-            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of template :" + node.get_TemplateName().getText());
+            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of templateDef :" + node.get_TemplateName().getText());
             System.exit(1);
         }
         catch (LexerException e) {
-            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of template :" + node.get_TemplateName().getText());
+            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of templateDef :" + node.get_TemplateName().getText());
             System.exit(1);
         }
 
@@ -81,8 +80,8 @@ public class TemplatesFactory
                 integratedTemplates.add(getTemplateByName(templateName));
             }
 
-            Template template = new Template(node.get_TemplateName().getText(), stringTemplateDef,
-                    currentAttributes, templateDef, integratedTemplates);
+            Template template = new Template(node.get_TemplateName().getText(), templateDef,
+                    currentAttributes, syntaxTree, integratedTemplates);
             this.templates.put(node.get_TemplateName().getText(), template);
         }
     }
@@ -91,7 +90,7 @@ public class TemplatesFactory
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        this.template = node.get_TemplateDef();
+        this.templateDef = node.get_TemplateDef().getText();
     }
 
     @Override
@@ -101,7 +100,7 @@ public class TemplatesFactory
         String template_name = node.get_Id().getText();
 
         if(this.templates.containsKey(template_name)){
-            this.template = this.templates.get(template_name).get_nodeTemplate();
+            this.templateDef = this.templates.get(template_name).get_templateDef();
         }else{
             throw new InterpreterException("Template of name " + template_name + " is unknown", node.get_Id());
         }
@@ -120,7 +119,7 @@ public class TemplatesFactory
     public void caseTemplate_FilePath(
             NTemplate_FilePath node) {
 
-        this.template = node.get_String();
+        this.templateDef = node.get_String().getText();
     }
 
     private Map<String, Object> getAttributes(
@@ -134,12 +133,12 @@ public class TemplatesFactory
         return attributes;
     }
 
-    private Node getTemplateDef(
+    private String getTemplateDef(
             Node node){
 
         visit(node);
-        Node template = this.template;
-        this.template = null;
+        String template = this.templateDef;
+        this.templateDef = null;
         return template;
     }
 
@@ -191,7 +190,7 @@ public class TemplatesFactory
                 integratedTemplates.add(getTemplateByName(templateName));
             }
             template = new Template(null, stringTemplateDef,
-                    null, node, integratedTemplates);
+                    null, syntaxTree, integratedTemplates);
         }
 
         return template;
@@ -205,7 +204,7 @@ public class TemplatesFactory
         Reader reader;
         BufferedReader br = null;
 
-        if(!templateDefinition.contains("<{")){
+        if(!templateDefinition.contains("<{") && !templateDefinition.contains("}>")){
             reader = new FileReader(templateDefinition.replaceAll("\"", ""));
             br = new BufferedReader(reader);
             StringBuilder sb = new StringBuilder();

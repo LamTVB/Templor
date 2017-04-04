@@ -30,7 +30,7 @@ public class TemplorFinder
         String name = node.getText().replaceAll("\\{\\{", "")
                 .replaceAll("}}", "");
 
-        if(!this.attributes.containsKey(name)){
+        if(this.attributes != null && !this.attributes.containsKey(name)){
             //TODO gérer pour cactch l'erreur dans le visiteur TemplatesFactory
             throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
         }
