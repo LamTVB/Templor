@@ -34,8 +34,15 @@ Parser
     stm =
         {print:} 'print' [lp:]'(' add_template ')' ';' |
         {render:} 'render' [lp:]'(' add_template ')' ';'|
-        {create:} [template_name:]id '(' parameters_list_opt ')' special_opt add_template |
+        {create:} type_opt [template_name:]id '(' parameters_list_opt ')' special_opt add_template |
         {populate:} [template_name:]id '.' [attribute_name:]id '=' exp ';';
+
+    type_opt =
+        {one:} type |
+        {zero:} ;
+
+    type =
+        {entity:} 'Entity';
 
     add_template =
         {add:} add_template [plus:]'+' template |

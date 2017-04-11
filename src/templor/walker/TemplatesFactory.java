@@ -9,12 +9,10 @@ import templor.language_templor.*;
 import templor.language_templor.Node;
 import templor.language_templor.Walker;
 import templor.structure.Template;
+import templor.structure.Type;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Lam on 24/02/2017.
@@ -39,6 +37,7 @@ public class TemplatesFactory
         Map<String, Object> currentAttributes = getAttributes(node.get_ParametersListOpt());
         List<String> templateNames = new ArrayList<>();
         Template superTemplate = null;
+        Type templateType = null;
 
         if(node.get_SpecialOpt() instanceof NSpecialOpt_One){
             String specialTemplateName = ((NSpecialOpt_One)node.get_SpecialOpt()).get_Special().get_TemplateName().getText();
@@ -46,6 +45,11 @@ public class TemplatesFactory
                 throw new InterpreterException("Template of name : " + specialTemplateName, node.get_TemplateName());
             }
             superTemplate = this.templates.get(specialTemplateName);
+        }
+
+        if(node.get_TypeOpt() instanceof NTypeOpt_One){
+            NType ntype = ((NTypeOpt_One) node.get_TypeOpt()).get_Type();
+            templateType = Type.get(ntype);
         }
 
         if(templateDef == null){
@@ -86,7 +90,15 @@ public class TemplatesFactory
             System.exit(1);
         }
 
+        if(templateType != null && templateType == Type.ENTITY){
+            if(currentAttributes.size() != 1 && superTemplate != null && superTemplate.get_attributes().size() != 1){
+                throw new InterpreterException("Template '" + node.get_TemplateName().getText() + "' must at least have one attribute", node.get_TemplateName());
+            }
+        }
 
+        if(superTemplate != null && superTemplate.getType() != templateType){
+            throw new InterpreterException("Cannot specialize template '" + superTemplate.get_templateName() + "' of different type", node.get_TemplateName());
+        }
 
         if(syntaxTree != null){
             List<Template> integratedTemplates = new ArrayList<>();
@@ -96,7 +108,7 @@ public class TemplatesFactory
             }
 
             Template template = new Template(superTemplate, node.get_TemplateName().getText(), templateDef,
-                    currentAttributes, syntaxTree, integratedTemplates);
+                    currentAttributes, syntaxTree, integratedTemplates, templateType);
 
             this.templates.put(node.get_TemplateName().getText(), template);
         }
@@ -141,7 +153,7 @@ public class TemplatesFactory
     private Map<String, Object> getAttributes(
             Node node){
 
-        this.templateAttributes = new HashMap<>();
+        this.templateAttributes = new LinkedHashMap<>();
 
         visit(node);
         Map<String, Object> attributes = this.templateAttributes;
@@ -206,7 +218,7 @@ public class TemplatesFactory
                 integratedTemplates.add(getTemplateByName(templateName));
             }
             template = new Template(null,null, stringTemplateDef,
-                    null, syntaxTree, integratedTemplates);
+                    null, syntaxTree, integratedTemplates, null);
         }
 
         return template;

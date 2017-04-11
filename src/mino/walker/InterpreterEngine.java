@@ -925,8 +925,20 @@ public class InterpreterEngine
         Template oldTemplate = this._currentTemplate;
         String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
         Template subTemplate = this._currentTemplate.getTemplate(templateName);
-        this._currentTemplate = subTemplate;
-        this.expEval = getExpEval(subTemplate.get_parsedTemplate());
+        Template specializedTemplate = null;
+
+        if(subTemplate.hasExtendedTemplates()){
+            specializedTemplate = subTemplate.getExtendedTemplate();
+        }
+
+        if(specializedTemplate != null){
+            this._currentTemplate = specializedTemplate;
+            this.expEval = getExpEval(specializedTemplate.get_parsedTemplate());
+        }else{
+            this._currentTemplate = subTemplate;
+            this.expEval = getExpEval(subTemplate.get_parsedTemplate());
+        }
+
         this._currentTemplate = oldTemplate;
     }
 

@@ -1,11 +1,11 @@
 package templor.structure;
 
 import mino.language_mino.Node;
+import mino.structure.ClassInfo;
+import mino.structure.Instance;
 import templor.exception.InterpreterException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Lam on 14/03/2017.
@@ -20,11 +20,13 @@ public class Template {
 
     private Node _parsedTemplate;
 
-    private Map<String, Object> _attributes = new HashMap<>();
+    private Map<String, Object> _attributes = new LinkedHashMap<>();
 
     private List<Template> _integratedTemplates;
 
-    private Map<String, Template> subTypes = new HashMap<>();
+    private Map<String, Template> extendedTemplates = new HashMap<>();
+
+    private Type type;
 
     public Template(
             Template parent,
@@ -32,7 +34,8 @@ public class Template {
             String template_def,
             Map<String, Object> attributes,
             Node nodeTemplateDef,
-            List<Template> templates){
+            List<Template> templates,
+            Type templateType){
 
         this._parent = parent;
         this._templateName = name;
@@ -40,13 +43,14 @@ public class Template {
         this._attributes = attributes;
         this._parsedTemplate = nodeTemplateDef;
         this._integratedTemplates = templates;
+        this.type = templateType;
         heritParent();
     }
 
     private void heritParent(){
         if(this._parent != null){
             this._templateDef = this._parent.get_templateDef().concat(this._templateDef);
-            this._parent.addSubTemplate(this);
+            this._parent.addExtendedTemplate(this);
         }
     }
 
@@ -132,13 +136,39 @@ public class Template {
         return null;
     }
 
-    private void addSubTemplate(
+    private void addExtendedTemplate(
             Template template){
 
-        if(this.subTypes.containsKey(template.get_templateName())){
+        if(this.extendedTemplates.containsKey(template.get_templateName())){
             throw new InterpreterException("Cannot add another subTemplate of name + " + template.get_templateName(), null);
         }
 
-        this.subTypes.put(template.get_templateName(), template);
+        this.extendedTemplates.put(template.get_templateName(), template);
+    }
+
+    public boolean hasExtendedTemplates(){
+        return this.extendedTemplates.size() > 0;
+    }
+
+    public Template getExtendedTemplate(){
+
+        if(this.type == Type.ENTITY){
+            //TODO test if student is subType of person
+            Map.Entry<String, Object> entry = this._attributes.entrySet().iterator().next();
+
+            if(entry.getValue() instanceof Instance){
+                String className = ((Instance)entry.getValue()).getClassInfo().getName().toLowerCase();
+
+                if(this.extendedTemplates.containsKey(className)){
+                    return this.extendedTemplates.get(className);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public Type getType(){
+        return this.type;
     }
 }

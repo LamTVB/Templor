@@ -134,16 +134,12 @@ classDefs() <{
    }
 }>
 
-person(person) <{
+Entity person(person) <{
     template_exp : "Salut je m'appelle " + {{person}}.getName() + " et j'ai " + {{person}}.getAge() + " ans.";
 }>
 
-student() special person <{
+Entity student() special person <{
     template_exp : "Mon code permanent est " + {{person}}.getCode();
-}>
-
-printPerson()<{
-    print({person});
 }>
 
 testInheritance() <{
@@ -155,11 +151,11 @@ testInheritance() <{
      third_person = new Person.init("Pierre", 27);
      fourth_person = new Student.init("Jean", 23, "JEAP0504199406");
 
-     persons[] = [first_person, second_person, third_person, fourth_person];
+     persons[] = [first_person, fourth_person, third_person, second_person];
 
      foreach(person in persons){
-         {human}.person = person;
-         {printPerson}
+         {person}.person = person;
+         print({person});
      }
 }>
 

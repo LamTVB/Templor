@@ -12,6 +12,7 @@ import templor.structure.Template;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class TemplorEngine
         Template template = getTemplate(node.get_AddTemplate());
 
         if(template != null && template.get_templateDef() != null){
-            System.out.println(template.get_templateDef().replaceAll("<\\{"," ").replaceAll("}>", " "));
+            System.out.println(formatTemplateDef(template.get_templateDef()));
         }else{
             throw new InterpreterException("Template cannot be null", node.get_Lp());
         }
@@ -125,7 +126,7 @@ public class TemplorEngine
             String leftTemplateDef = leftTemplate.get_templateDef();
 
             String template = rightTemplateDef.concat(leftTemplateDef);
-            Map<String, Object> attributes = new HashMap<>();
+            Map<String, Object> attributes = new LinkedHashMap<>();
             if(rightTemplate.get_attributes() != null){
                 attributes.putAll(rightTemplate.get_attributes());
             }
@@ -133,7 +134,7 @@ public class TemplorEngine
                 attributes.putAll(leftTemplate.get_attributes());
             }
 
-            this.tempTemplate = new Template(null, null, template, attributes, null, null);
+            this.tempTemplate = new Template(null, null, template, attributes, null, null, null);
         }
     }
 
@@ -183,8 +184,7 @@ public class TemplorEngine
     private mino.language_mino.Node parseTree(
             Template templateToParse){
 
-//        String templateDef = this.replaceTemplates(templateToParse);
-        String templateDef = templateToParse.get_templateDef().replaceAll("<\\{"," ").replaceAll("}>", " ");
+        String templateDef = formatTemplateDef(templateToParse.get_templateDef());
 
         if(templateDef == null){
             throw new InterpreterException("Template def is null", null);
@@ -226,25 +226,6 @@ public class TemplorEngine
         Object expression = this.expVal;
         this.expVal = null;
         return expression;
-    }
-
-    private String replaceTemplates(
-            Template templateToReplace){
-
-        String templateDef = this.formatTemplateDef(templateToReplace.get_templateDef());
-        List<Template> subTemplates = templateToReplace.get_integratedTemplates();
-
-        if(subTemplates != null){
-            for(Template b_template : subTemplates){
-                if(b_template.get_templateDef() != null){
-
-                    String subTemplateDef = replaceTemplates(b_template);
-                    templateDef = templateDef.replaceAll("\\{"+ b_template.get_templateName() + "}", subTemplateDef);
-                }
-            }
-        }
-
-        return templateDef;
     }
 
     private void executeMino(

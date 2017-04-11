@@ -114,7 +114,7 @@ Parser
     {if:} 'if' [l_par:]'(' exp ')' '{' stms '}' else_opt |
     {return:} [return_kwd:]'return' exp_opt ';' |
     {interpolation:} interpolation|
-    {template_integration:} template|
+    {template_integration:} template |
     {populate:} template '.' id '=' exp ';' |
     {foreach:} 'foreach' [l_par:]'(' id 'in' [array_name:]id ')' '{' stms '}' |
     {expression:} 'template_exp' ':' exp ';';
