@@ -38,6 +38,15 @@ public class TemplatesFactory
         String templateDef = getTemplateDef(node.get_AddTemplate());
         Map<String, Object> currentAttributes = getAttributes(node.get_ParametersListOpt());
         List<String> templateNames = new ArrayList<>();
+        Template superTemplate = null;
+
+        if(node.get_SpecialOpt() instanceof NSpecialOpt_One){
+            String specialTemplateName = ((NSpecialOpt_One)node.get_SpecialOpt()).get_Special().get_TemplateName().getText();
+            if(!this.templates.containsKey(specialTemplateName)){
+                throw new InterpreterException("Template of name : " + specialTemplateName, node.get_TemplateName());
+            }
+            superTemplate = this.templates.get(specialTemplateName);
+        }
 
         if(templateDef == null){
             throw new InterpreterException("Template cannot be null", node.get_TemplateName());
@@ -45,7 +54,11 @@ public class TemplatesFactory
         Reader reader = null;
 
         try {
-            reader = getTemplateReader(templateDef);
+            if(superTemplate != null){
+                reader = getTemplateReader(templateDef, superTemplate.get_templateDef());
+            }else{
+                reader = getTemplateReader(templateDef);
+            }
         }
         catch (IOException e) {
             throw new InterpreterException(e.getMessage(), node.get_TemplateName());
@@ -54,7 +67,7 @@ public class TemplatesFactory
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            TemplorFinder engine = new TemplorFinder(currentAttributes);
+            TemplorFinder engine = new TemplorFinder(currentAttributes,superTemplate);
             engine.visit(syntaxTree);
             templateNames = engine.getDependentTemplates();
         }
@@ -63,11 +76,13 @@ public class TemplatesFactory
             System.exit(1);
         }
         catch (ParserException e) {
-            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of templateDef :" + node.get_TemplateName().getText());
+            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of templateDef : "
+                    + node.get_TemplateName().getText() + " while initializing all templates");
             System.exit(1);
         }
         catch (LexerException e) {
-            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of templateDef :" + node.get_TemplateName().getText());
+            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of templateDef : "
+                    + node.get_TemplateName().getText() + " while initializing all templates");
             System.exit(1);
         }
 
@@ -80,8 +95,9 @@ public class TemplatesFactory
                 integratedTemplates.add(getTemplateByName(templateName));
             }
 
-            Template template = new Template(node.get_TemplateName().getText(), templateDef,
+            Template template = new Template(superTemplate, node.get_TemplateName().getText(), templateDef,
                     currentAttributes, syntaxTree, integratedTemplates);
+
             this.templates.put(node.get_TemplateName().getText(), template);
         }
     }
@@ -164,7 +180,7 @@ public class TemplatesFactory
         mino.language_mino.Node syntaxTree = null;
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            TemplorFinder engine = new TemplorFinder(null);
+            TemplorFinder engine = new TemplorFinder(null, null);
             engine.visit(syntaxTree);
             templateNames = engine.getDependentTemplates();
         }
@@ -189,7 +205,7 @@ public class TemplatesFactory
             for(String templateName : templateNames){
                 integratedTemplates.add(getTemplateByName(templateName));
             }
-            template = new Template(null, stringTemplateDef,
+            template = new Template(null,null, stringTemplateDef,
                     null, syntaxTree, integratedTemplates);
         }
 
@@ -197,8 +213,16 @@ public class TemplatesFactory
 
     }
 
-    public Reader getTemplateReader(
-            String templateDefinition)
+    private Reader getTemplateReader(
+            String templateDef)
+            throws IOException {
+
+        return getTemplateReader(templateDef, null);
+    }
+
+    private Reader getTemplateReader(
+            String templateDefinition,
+            String parentDef)
             throws IOException {
 
         Reader reader;
@@ -217,6 +241,10 @@ public class TemplatesFactory
             templateDefinition = sb.toString();
         }else{
             templateDefinition = templateDefinition.replaceAll("<\\{"," ").replaceAll("}>", " ");
+        }
+
+        if(parentDef != null){
+            templateDefinition.concat(parentDef.replaceAll("<\\{"," ").replaceAll("}>", " "));
         }
 
         reader = new StringReader(templateDefinition);

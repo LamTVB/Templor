@@ -116,7 +116,8 @@ Parser
     {interpolation:} interpolation|
     {template_integration:} template|
     {populate:} template '.' id '=' exp ';' |
-    {foreach:} 'foreach' [l_par:]'(' id 'in' [array_name:]id ')' '{' stms '}';
+    {foreach:} 'foreach' [l_par:]'(' id 'in' [array_name:]id ')' '{' stms '}' |
+    {expression:} 'template_exp' ':' exp ';';
 
   array_opt =
     '[]' | ;

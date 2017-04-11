@@ -34,7 +34,7 @@ Parser
     stm =
         {print:} 'print' [lp:]'(' add_template ')' ';' |
         {render:} 'render' [lp:]'(' add_template ')' ';'|
-        {create:} [template_name:]id '(' parameters_list_opt ')' add_template ';' |
+        {create:} [template_name:]id '(' parameters_list_opt ')' special_opt add_template |
         {populate:} [template_name:]id '.' [attribute_name:]id '=' exp ';';
 
     add_template =
@@ -75,7 +75,12 @@ Parser
         {false:} 'false' |
         {float:} float;
 
+    special_opt =
+        {one:} special |
+        {zero:} ;
 
+    special =
+        'special' [template_name:]id;
 
 
 

@@ -12,6 +12,8 @@ import java.util.Map;
  */
 public class Template {
 
+    private Template _parent;
+
     private String _templateName;
 
     private String _templateDef;
@@ -22,18 +24,30 @@ public class Template {
 
     private List<Template> _integratedTemplates;
 
+    private Map<String, Template> subTypes = new HashMap<>();
+
     public Template(
+            Template parent,
             String name,
             String template_def,
             Map<String, Object> attributes,
             Node nodeTemplateDef,
             List<Template> templates){
 
+        this._parent = parent;
         this._templateName = name;
         this._templateDef = template_def;
         this._attributes = attributes;
         this._parsedTemplate = nodeTemplateDef;
         this._integratedTemplates = templates;
+        heritParent();
+    }
+
+    private void heritParent(){
+        if(this._parent != null){
+            this._templateDef = this._parent.get_templateDef().concat(this._templateDef);
+            this._parent.addSubTemplate(this);
+        }
     }
 
     public Node get_parsedTemplate(){return this._parsedTemplate;}
@@ -95,8 +109,36 @@ public class Template {
 
         if(_attributes != null && _attributes.containsKey(name)){
             return _attributes.get(name);
+        }else{
+            if(this._parent != null){
+                return this._parent.getValue(name);
+            }
         }
 
         return null;
+    }
+
+    public Boolean isVariableExist(
+            String varName){
+
+        if(_attributes != null && _attributes.containsKey(varName)){
+            return true;
+        }else{
+            if(this._parent != null){
+                return this._parent.isVariableExist(varName);
+            }
+        }
+
+        return null;
+    }
+
+    private void addSubTemplate(
+            Template template){
+
+        if(this.subTypes.containsKey(template.get_templateName())){
+            throw new InterpreterException("Cannot add another subTemplate of name + " + template.get_templateName(), null);
+        }
+
+        this.subTypes.put(template.get_templateName(), template);
     }
 }

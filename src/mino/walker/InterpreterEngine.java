@@ -571,9 +571,9 @@ public class InterpreterEngine
             Float rightValue;
 
             if(left.isa(this.integerClassInfo)){
-                leftValue = ((IntegerInstance)right).getValue().floatValue();
+                leftValue = ((IntegerInstance)left).getValue().floatValue();
             }else{
-                leftValue = ((FloatInstance)right).getValue();
+                leftValue = ((FloatInstance)left).getValue();
             }
 
             if(right.isa(this.integerClassInfo)){
@@ -1045,6 +1045,13 @@ public class InterpreterEngine
     }
 
     @Override
+    public void caseTerm_Interpolation(
+            NTerm_Interpolation node) {
+
+        this.expEval = getExpEval(node.get_Interpolation());
+    }
+
+    @Override
     public void caseStm_TemplateIntegration(
             NStm_TemplateIntegration node) {
 
@@ -1053,6 +1060,13 @@ public class InterpreterEngine
         this._currentTemplate = this._currentTemplate.getTemplate(templateName);
         visit(this._currentTemplate.get_parsedTemplate());
         this._currentTemplate = oldTemplate;
+    }
+
+    @Override
+    public void caseStm_Expression(
+            NStm_Expression node) {
+
+        this.expEval = getExpEval(node.get_Exp());
     }
 
     @Override

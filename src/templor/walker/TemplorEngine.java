@@ -55,7 +55,7 @@ public class TemplorEngine
         Template template = getTemplate(node.get_AddTemplate());
 
         if(template != null && template.get_templateDef() != null){
-            System.out.println(template.get_templateDef());
+            System.out.println(template.get_templateDef().replaceAll("<\\{"," ").replaceAll("}>", " "));
         }else{
             throw new InterpreterException("Template cannot be null", node.get_Lp());
         }
@@ -103,8 +103,7 @@ public class TemplorEngine
         Template template = getTemplate(node.get_AddTemplate());
 
         if(template != null){
-            mino.language_mino.Node templateDef = parseTree(template);
-            this.interpreterEngine.visit(templateDef, template);
+            executeMino(template);
         }else{
             throw new InterpreterException("Template to render cannot be null", node.get_Lp());
         }
@@ -134,7 +133,7 @@ public class TemplorEngine
                 attributes.putAll(leftTemplate.get_attributes());
             }
 
-            this.tempTemplate = new Template(null, template, attributes, null, null);
+            this.tempTemplate = new Template(null, null, template, attributes, null, null);
         }
     }
 
@@ -246,5 +245,12 @@ public class TemplorEngine
         }
 
         return templateDef;
+    }
+
+    private void executeMino(
+            Template template){
+
+        mino.language_mino.Node templateDef = parseTree(template);
+        this.interpreterEngine.visit(templateDef, template);
     }
 }

@@ -2,6 +2,7 @@ package mino.walker;
 
 import mino.exception.InterpreterException;
 import mino.language_mino.*;
+import templor.structure.Template;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,12 +16,15 @@ public class TemplorFinder
         extends Walker{
 
     private final Map<String, Object> attributes;
+    private final Template _parent;
     private final List<String> templates = new ArrayList<>();
 
     public TemplorFinder(
-            Map<String, Object> attributes){
+            Map<String, Object> attributes,
+            Template parent){
 
         this.attributes = attributes;
+        this._parent = parent;
     }
 
     @Override
@@ -30,9 +34,13 @@ public class TemplorFinder
         String name = node.getText().replaceAll("\\{\\{", "")
                 .replaceAll("}}", "");
 
-        if(this.attributes != null && !this.attributes.containsKey(name)){
+        if(this.attributes != null && !this.attributes.containsKey(name) && this._parent == null){
             //TODO gérer pour cactch l'erreur dans le visiteur TemplatesFactory
             throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
+        }else{
+            if(this._parent != null && !this._parent.isVariableExist(name)) {
+                throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
+            }
         }
     }
 
