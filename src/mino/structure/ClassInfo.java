@@ -19,6 +19,7 @@ package mino.structure;
 
 import mino.exception.*;
 import mino.language_mino.*;
+import templor.structure.Template;
 
 public class ClassInfo {
 
@@ -32,18 +33,28 @@ public class ClassInfo {
 
     private final FieldTable fieldTable = new FieldTable(this);
 
+    private Template template;
+
     ClassInfo(
             ClassTable classTable,
-            NClassdef definition) {
+            NClassdef definition,
+            Template template) {
 
         this.classTable = classTable;
         this.definition = definition;
+        this.template = template;
 
         if (getName().equals("Object")) {
             // Object
             if (definition.get_SpecialOpt() instanceof NSpecialOpt_One) {
                 throw new InterpreterException(
                         "class Object may not have a super class",
+                        definition.get_ClassName());
+            }
+
+            if(definition.get_TemplateOpt() instanceof NTemplateOpt_One){
+                throw new InterpreterException(
+                        "class may not have a template",
                         definition.get_ClassName());
             }
             this.superClass = null;
@@ -112,5 +123,15 @@ public class ClassInfo {
         }
 
         return false;
+    }
+
+    public Template getTemplate(){
+
+        return this.template;
+    }
+
+    public boolean hasTemplate(){
+
+        return this.template != null;
     }
 }

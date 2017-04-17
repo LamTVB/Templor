@@ -18,6 +18,7 @@
 package mino.structure;
 
 import mino.language_mino.*;
+import templor.structure.Template;
 
 public class BooleanClassInfo
         extends ClassInfo {
@@ -28,9 +29,10 @@ public class BooleanClassInfo
 
     BooleanClassInfo(
             ClassTable classTable,
-            NClassdef definition) {
+            NClassdef definition,
+            Template template) {
 
-        super(classTable, definition);
+        super(classTable, definition, template);
     }
 
     @Override

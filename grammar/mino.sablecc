@@ -24,7 +24,8 @@ Lexer
   field_name = '_' lower name_char*;
   invalid_id = ('_' | lower | upper)+;
   interpolation = '{{' id '}}';
-  template = '{' id '}';
+  include_template = '{' id '}';
+  template_kw = 'template';
 
   name_char = upper | lower | '_';
   upper = 'A'..'Z';
@@ -58,7 +59,11 @@ Parser
     {zero:} ;
 
   classdef =
-    'class' class_name special_opt '{' members '}';
+    'class' class_name special_opt template_opt '{' members '}';
+
+  template_opt =
+    {one:} template_kw id |
+    {zero:} ;
 
   special_opt =
     {one:} special |
@@ -179,6 +184,10 @@ Parser
     {interpolation:} interpolation |
     {template:} template |
     {array:} '[' exp_list_opt ']';
+
+  template =
+    {self:} 'self' '::' template_kw |
+    {simple:} include_template;
 
   call =
     right_unary_exp '.' id '(' exp_list_opt ')';

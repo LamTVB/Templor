@@ -22,8 +22,6 @@ public class Template {
 
     private Map<String, Object> _attributes = new LinkedHashMap<>();
 
-    private List<Template> _integratedTemplates;
-
     private Map<String, Template> extendedTemplates = new HashMap<>();
 
     private Type type;
@@ -34,7 +32,6 @@ public class Template {
             String template_def,
             Map<String, Object> attributes,
             Node nodeTemplateDef,
-            List<Template> templates,
             Type templateType){
 
         this._parent = parent;
@@ -42,7 +39,6 @@ public class Template {
         this._templateDef = template_def;
         this._attributes = attributes;
         this._parsedTemplate = nodeTemplateDef;
-        this._integratedTemplates = templates;
         this.type = templateType;
         heritParent();
     }
@@ -83,29 +79,8 @@ public class Template {
         return null;
     }
 
-    public List<Template> get_integratedTemplates(){
-        return this._integratedTemplates;
-    }
-
     public String get_templateName(){
         return this._templateName;
-    }
-
-    public Template getTemplate(
-            String name){
-
-        if(this._templateName != null && this._templateName.equals(name)){
-            return this;
-        }else{
-            for(Template b_template : this._integratedTemplates){
-                Template found = b_template.getTemplate(name);
-                if(found != null){
-                    return found;
-                }
-            }
-        }
-
-        return null;
     }
 
     public Object getValue(
@@ -144,28 +119,6 @@ public class Template {
         }
 
         this.extendedTemplates.put(template.get_templateName(), template);
-    }
-
-    public boolean hasExtendedTemplates(){
-        return this.extendedTemplates.size() > 0;
-    }
-
-    public Template getExtendedTemplate(){
-
-        if(this.type == Type.ENTITY){
-            //TODO test if student is subType of person
-            Map.Entry<String, Object> entry = this._attributes.entrySet().iterator().next();
-
-            if(entry.getValue() instanceof Instance){
-                String className = ((Instance)entry.getValue()).getClassInfo().getName().toLowerCase();
-
-                if(this.extendedTemplates.containsKey(className)){
-                    return this.extendedTemplates.get(className);
-                }
-            }
-        }
-
-        return null;
     }
 
     public Type getType(){

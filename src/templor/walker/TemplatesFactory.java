@@ -73,7 +73,6 @@ public class TemplatesFactory
             syntaxTree = new mino.language_mino.Parser(reader).parse();
             TemplorFinder engine = new TemplorFinder(currentAttributes,superTemplate);
             engine.visit(syntaxTree);
-            templateNames = engine.getDependentTemplates();
         }
         catch (IOException e) {
             System.err.println(e.getMessage());
@@ -101,14 +100,8 @@ public class TemplatesFactory
         }
 
         if(syntaxTree != null){
-            List<Template> integratedTemplates = new ArrayList<>();
-
-            for(String templateName : templateNames){
-                integratedTemplates.add(getTemplateByName(templateName));
-            }
-
             Template template = new Template(superTemplate, node.get_TemplateName().getText(), templateDef,
-                    currentAttributes, syntaxTree, integratedTemplates, templateType);
+                    currentAttributes, syntaxTree, templateType);
 
             this.templates.put(node.get_TemplateName().getText(), template);
         }
@@ -184,17 +177,17 @@ public class TemplatesFactory
         }
     }
 
-    public Template createAnonymousTemplate(NTemplateDef node){
-        List<String> templateNames = new ArrayList<>();
+    public Template createAnonymousTemplate(
+            NTemplateDef node){
 
         String stringTemplateDef = node.getText().replaceAll("<\\{"," ").replaceAll("}>", " ");
         StringReader reader = new StringReader(stringTemplateDef);
         mino.language_mino.Node syntaxTree = null;
+
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
             TemplorFinder engine = new TemplorFinder(null, null);
             engine.visit(syntaxTree);
-            templateNames = engine.getDependentTemplates();
         }
         catch (IOException e) {
             System.err.println(e.getMessage());
@@ -212,13 +205,8 @@ public class TemplatesFactory
         Template template = null;
 
         if(syntaxTree != null){
-            List<Template> integratedTemplates = new ArrayList<>();
-
-            for(String templateName : templateNames){
-                integratedTemplates.add(getTemplateByName(templateName));
-            }
             template = new Template(null,null, stringTemplateDef,
-                    null, syntaxTree, integratedTemplates, null);
+                    null, syntaxTree, null);
         }
 
         return template;

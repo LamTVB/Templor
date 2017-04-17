@@ -21,6 +21,7 @@ import java.math.*;
 import java.util.*;
 
 import mino.language_mino.*;
+import templor.structure.Template;
 
 public class IntegerClassInfo
         extends ClassInfo {
@@ -29,9 +30,10 @@ public class IntegerClassInfo
 
     IntegerClassInfo(
             ClassTable classTable,
-            NClassdef definition) {
+            NClassdef definition,
+            Template template) {
 
-        super(classTable, definition);
+        super(classTable, definition, template);
     }
 
     @Override

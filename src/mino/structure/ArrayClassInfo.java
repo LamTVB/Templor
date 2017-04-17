@@ -1,6 +1,7 @@
 package mino.structure;
 
 import mino.language_mino.NClassdef;
+import templor.structure.Template;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,9 +15,10 @@ public class ArrayClassInfo
 
     public ArrayClassInfo(
             ClassTable classTable,
-            NClassdef definition) {
+            NClassdef definition,
+            Template template) {
 
-        super(classTable, definition);
+        super(classTable, definition, template);
     }
 
     @Override

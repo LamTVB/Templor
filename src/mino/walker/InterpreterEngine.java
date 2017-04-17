@@ -40,6 +40,8 @@ public class InterpreterEngine
 
     private Instance expEval;
 
+    private Template expTemplate;
+
     private Frame currentFrame;
 
     private ClassInfo objectClassInfo;
@@ -56,6 +58,8 @@ public class InterpreterEngine
 
     private Template _currentTemplate;
 
+    private Map<String, Template> nameTemplateMap;
+
     public void visit(
             Node node) {
 
@@ -64,9 +68,12 @@ public class InterpreterEngine
 
     public void visit(
             Node node,
-            Template templateExecute){
+            Template templateExecute,
+            Map<String, Template> templates){
 
         this._currentTemplate = templateExecute;
+        this.nameTemplateMap = templates;
+        this.classTable.setNameToTemplateMap(this.nameTemplateMap);
         node.apply(this);
     }
 
@@ -130,6 +137,15 @@ public class InterpreterEngine
         List<NExp> expList = this.expList;
         this.expList = null;
         return expList;
+    }
+
+    private Template getTemplate(
+            NTemplate node){
+
+        visit(node);
+        Template expTemplate = this.expTemplate;
+        this.expTemplate = null;
+        return expTemplate;
     }
 
     private Instance execute(
@@ -922,24 +938,36 @@ public class InterpreterEngine
     public void caseTerm_Template(
             NTerm_Template node) {
 
+
+
         Template oldTemplate = this._currentTemplate;
-        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
-        Template subTemplate = this._currentTemplate.getTemplate(templateName);
-        Template specializedTemplate = null;
-
-        if(subTemplate.hasExtendedTemplates()){
-            specializedTemplate = subTemplate.getExtendedTemplate();
-        }
-
-        if(specializedTemplate != null){
-            this._currentTemplate = specializedTemplate;
-            this.expEval = getExpEval(specializedTemplate.get_parsedTemplate());
-        }else{
-            this._currentTemplate = subTemplate;
-            this.expEval = getExpEval(subTemplate.get_parsedTemplate());
-        }
-
+        this._currentTemplate = getTemplate(node.get_Template());
+        this.expEval = getExpEval(this._currentTemplate.get_parsedTemplate());
         this._currentTemplate = oldTemplate;
+    }
+
+    @Override
+    public void caseTemplate_Self(
+            NTemplate_Self node) {
+
+        if(!this.currentFrame.getReceiver().getClassInfo().hasTemplate()) {
+            throw new InterpreterException("Using self on undefined template on class "
+                    + this.currentFrame.getReceiver().getClassInfo().getName(), node.get_TemplateKw());
+        }
+
+        this.expTemplate = this.currentFrame.getReceiver().getClassInfo().getTemplate();
+    }
+
+    @Override
+    public void caseTemplate_Simple(
+            NTemplate_Simple node) {
+
+        String templateName = node.get_IncludeTemplate().getText().substring(1, node.get_IncludeTemplate().getText().length() - 1);
+        if(!this.nameTemplateMap.containsKey(templateName)){
+            throw new InterpreterException("Template '" + templateName + "' was not initialised", node.get_IncludeTemplate());
+        }
+
+        this.expTemplate = this.nameTemplateMap.get(templateName);
     }
 
     @Override
@@ -1018,16 +1046,14 @@ public class InterpreterEngine
     public void caseStm_Populate(
             NStm_Populate node) {
 
-        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
+        Template template = getTemplate(node.get_Template());
         String attributeName = node.get_Id().getText();
         Instance exp = getExpEval(node.get_Exp());
-
-        Template template = this._currentTemplate.getTemplate(templateName);
 
         if(template != null){
             template.addOrUpdateAttribute(attributeName, exp);
         }else{
-            throw new InterpreterException("Template of name : " + templateName + " does not exist", node.get_Template());
+            throw new InterpreterException("Template must not be null", node.get_Id());
         }
     }
 
@@ -1050,7 +1076,7 @@ public class InterpreterEngine
             Boolean booleanValue = (Boolean)value;
             this.expEval = booleanValue ? this.booleanClassInfo.getTrue() : this.booleanClassInfo.getFalse();
         }else if(value == null){
-            throw new InterpreterException("Cannot find attribute of name : " + attributeName + " in template " + this._currentTemplate.get_templateName(), node);
+            throw new InterpreterException("Attribute " + attributeName + " cannot be null in template " + this._currentTemplate.get_templateName(), node);
         }else{
             throw new InterpreterException("Error", node);
         }
@@ -1068,8 +1094,7 @@ public class InterpreterEngine
             NStm_TemplateIntegration node) {
 
         Template oldTemplate = this._currentTemplate;
-        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
-        this._currentTemplate = this._currentTemplate.getTemplate(templateName);
+        this._currentTemplate = getTemplate(node.get_Template());
         visit(this._currentTemplate.get_parsedTemplate());
         this._currentTemplate = oldTemplate;
     }

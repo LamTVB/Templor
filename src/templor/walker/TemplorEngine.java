@@ -13,7 +13,6 @@ import templor.structure.Template;
 import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +21,7 @@ import java.util.Map;
 public class TemplorEngine
         extends Walker{
 
-    private Map<String, Template> templates = new HashMap<>();
+    private Map<String, Template> templatesMap = new HashMap<>();
 
     private Template tempTemplate = null;
     private Object expVal;
@@ -39,14 +38,14 @@ public class TemplorEngine
             NProgram node) {
 
         templatesFactory.visit(node);
-        this.templates = templatesFactory.getTemplates();
+        this.templatesMap = templatesFactory.getTemplates();
         node.applyOnChildren(this);
     }
 
     @Override
     public void caseStm_Create(
             NStm_Create node) {
-        //Override this function in order to avoid parse named templates on creation
+        //Override this function in order to avoid parse named templatesMap on creation
     }
 
     @Override
@@ -68,8 +67,8 @@ public class TemplorEngine
 
         String template_name = node.get_Id().getText();
 
-        if(this.templates.containsKey(template_name)){
-            this.tempTemplate = this.templates.get(template_name);
+        if(this.templatesMap.containsKey(template_name)){
+            this.tempTemplate = this.templatesMap.get(template_name);
         }else{
             throw new InterpreterException("Template of name " + template_name + " is unknown", node.get_Id());
         }
@@ -79,7 +78,7 @@ public class TemplorEngine
     public void caseStm_Populate(
             NStm_Populate node) {
 
-        Template receiver = this.templates.get(node.get_TemplateName().getText());
+        Template receiver = this.templatesMap.get(node.get_TemplateName().getText());
 
         if(receiver == null){
             throw new InterpreterException("Template of name " + node.get_TemplateName().getText() + " does not exist", node.get_TemplateName());
@@ -134,7 +133,7 @@ public class TemplorEngine
                 attributes.putAll(leftTemplate.get_attributes());
             }
 
-            this.tempTemplate = new Template(null, null, template, attributes, null, null, null);
+            this.tempTemplate = new Template(null, null, template, attributes, null, null);
         }
     }
 
@@ -194,9 +193,19 @@ public class TemplorEngine
         try {
             syntaxTree = new Parser(reader).parse();
         }
-        catch (LexerException | IOException | ParserException e) {
-            e.printStackTrace();
-            System.exit(0);
+        catch (IOException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        }
+        catch (ParserException e) {
+            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of templateDef : "
+                    + templateToParse.get_templateName() + " while initializing all templates");
+            System.exit(1);
+        }
+        catch (LexerException e) {
+            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of templateDef : "
+                    + templateToParse.get_templateName() + " while initializing all templates");
+            System.exit(1);
         }
 
         return syntaxTree;
@@ -232,6 +241,12 @@ public class TemplorEngine
             Template template){
 
         mino.language_mino.Node templateDef = parseTree(template);
-        this.interpreterEngine.visit(templateDef, template);
+        try{
+            this.interpreterEngine.visit(templateDef, template, this.templatesMap);
+        }catch(mino.exception.InterpreterException e){
+            System.err.println("INTERPRETER ERROR: " + e.getMessage() + " on execution of template : "
+                    + template.get_templateName());
+            System.exit(1);
+        }
     }
 }

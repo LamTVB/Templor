@@ -21,38 +21,53 @@ import java.util.*;
 
 import mino.exception.*;
 import mino.language_mino.*;
+import templor.structure.Template;
 
 public class ClassTable {
 
     private final Map<String, ClassInfo> nameToClassInfoMap = new LinkedHashMap<String, ClassInfo>();
+
+    private Map<String, Template> nameToTemplateMap = new LinkedHashMap<>();
 
     public ClassInfo add(
             NClassdef definition) {
 
         Token nameToken = definition.get_ClassName();
         String name = nameToken.getText();
+        Template template = null;
 
         if (this.nameToClassInfoMap.containsKey(name)) {
             throw new InterpreterException("duplicate definition of class "
                     + name, nameToken);
         }
 
+        if(definition.get_TemplateOpt() instanceof NTemplateOpt_One){
+
+            NTemplateOpt_One nTemplate = (NTemplateOpt_One)definition.get_TemplateOpt();
+            if(!this.nameToTemplateMap.containsKey(nTemplate.get_Id().getText())){
+                throw new InterpreterException("Template '" + nTemplate.get_Id().getText() +"' has not been initialized",
+                        nTemplate.get_Id());
+            }
+
+            template = this.nameToTemplateMap.get(nTemplate.get_Id().getText());
+        }
+
         ClassInfo classInfo;
         if (name.equals("Boolean")) {
-            classInfo = new BooleanClassInfo(this, definition);
+            classInfo = new BooleanClassInfo(this, definition, template);
         }
         else if (name.equals("Integer")) {
-            classInfo = new IntegerClassInfo(this, definition);
+            classInfo = new IntegerClassInfo(this, definition, template);
         }
         else if (name.equals("String")) {
-            classInfo = new StringClassInfo(this, definition);
+            classInfo = new StringClassInfo(this, definition, template);
         }else if(name.equals("Float")){
-            classInfo = new FloatClassInfo(this, definition);
+            classInfo = new FloatClassInfo(this, definition, template);
         }else if(name.equals("Array")){
-            classInfo = new ArrayClassInfo(this, definition);
+            classInfo = new ArrayClassInfo(this, definition, template);
         }
         else {
-            classInfo = new ClassInfo(this, definition);
+            classInfo = new ClassInfo(this, definition, template);
         }
 
         this.nameToClassInfoMap.put(name, classInfo);
@@ -97,5 +112,9 @@ public class ClassTable {
 
     public ClassInfo getArrayClassInfoOrNull(){
         return this.nameToClassInfoMap.get("Array");
+    }
+
+    public void setNameToTemplateMap(Map<String, Template> templates){
+        this.nameToTemplateMap = templates;
     }
 }

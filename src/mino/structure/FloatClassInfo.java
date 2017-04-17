@@ -1,6 +1,7 @@
 package mino.structure;
 
 import mino.language_mino.*;
+import templor.structure.Template;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,9 +14,12 @@ public class FloatClassInfo
 
     private final Map<Float, Instance> valueMap = new LinkedHashMap<Float, Instance>();
 
-    FloatClassInfo(ClassTable classTable, NClassdef definition) {
+    FloatClassInfo(
+            ClassTable classTable,
+            NClassdef definition,
+            Template template) {
 
-        super(classTable, definition);
+        super(classTable, definition, template);
     }
 
     @Override

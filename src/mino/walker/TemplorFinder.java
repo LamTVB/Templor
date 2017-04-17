@@ -17,7 +17,6 @@ public class TemplorFinder
 
     private final Map<String, Object> attributes;
     private final Template _parent;
-    private final List<String> templates = new ArrayList<>();
 
     public TemplorFinder(
             Map<String, Object> attributes,
@@ -44,29 +43,9 @@ public class TemplorFinder
         }
     }
 
-    @Override
-    public void caseStm_TemplateIntegration(
-            NStm_TemplateIntegration node) {
-
-        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
-        templates.add(templateName);
-    }
-
-    @Override
-    public void caseTerm_Template(
-            NTerm_Template node) {
-
-        String templateName = node.get_Template().getText().substring(1, node.get_Template().getText().length() - 1);
-        templates.add(templateName);
-    }
-
     public void visit(
             Node node){
 
         node.apply(this);
-    }
-
-    public List<String> getDependentTemplates(){
-        return this.templates;
     }
 }

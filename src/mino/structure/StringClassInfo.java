@@ -20,6 +20,7 @@ package mino.structure;
 import java.util.*;
 
 import mino.language_mino.*;
+import templor.structure.Template;
 
 public class StringClassInfo
         extends ClassInfo {
@@ -28,9 +29,10 @@ public class StringClassInfo
 
     StringClassInfo(
             ClassTable classTable,
-            NClassdef definition) {
+            NClassdef definition,
+            Template template) {
 
-        super(classTable, definition);
+        super(classTable, definition, template);
     }
 
     @Override
