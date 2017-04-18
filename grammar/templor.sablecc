@@ -36,7 +36,7 @@ Parser
     stm =
         {print:} 'print' [lp:]'(' template_name ')' ';' |
         {render:} 'render' [lp:]'(' template_name ')' ';'|
-        {create:} template_kw template_name special_opt '{' members '}' |
+        {definition:} template_kw template_name special_opt '{' members '}' |
         {populate:} [template_name:]id '.' [attribute_name:]id '=' exp ';';
 
     members =

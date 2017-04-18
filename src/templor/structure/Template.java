@@ -2,6 +2,7 @@ package templor.structure;
 
 import mino.language_mino.Node;
 import templor.exception.TemplorException;
+import templor.language_templor.NBlockdef;
 
 import java.util.*;
 
@@ -38,20 +39,47 @@ public class Template {
         this._attributes = attributes;
         this._parsedTemplate = nodeTemplateDef;
         this._blocks = blocks;
-        heritParent();
     }
 
-    private void heritParent(){
-        if(this._parent != null){
-            this._templateDef = this._parent.get_templateDef().concat(this._templateDef);
-            this._parent.addExtendedTemplate(this);
-        }
+    public Template(
+            Template parent,
+            String name){
+
+        this._parent = parent;
+        this._templateName = name;
     }
 
     public Node get_parsedTemplate(){return this._parsedTemplate;}
 
+    public void set_parsedTemplate(
+            Node parsedNode){
+
+        this._parsedTemplate = parsedNode;
+    }
+
     public String get_templateDef(){
         return this._templateDef;
+    }
+
+    public void setDefinition(
+            String templateDef){
+
+        this._templateDef = templateDef;
+    }
+
+    public Map<String, Object> get_attributes(){
+
+        if(this._attributes != null){
+            return this._attributes;
+        }
+
+        return null;
+    }
+
+    public void set_attributes(
+            Map<String, Object> attributes){
+
+        this._attributes = attributes;
     }
 
     public void addOrUpdateAttribute(
@@ -68,17 +96,18 @@ public class Template {
         }
     }
 
-    public Map<String, Object> get_attributes(){
+    public Boolean isVariableExist(
+            String varName){
 
-        if(this._attributes != null){
-            return this._attributes;
+        if(_attributes != null && _attributes.containsKey(varName)){
+            return true;
+        }else{
+            if(this._parent != null){
+                return this._parent.isVariableExist(varName);
+            }
         }
 
         return null;
-    }
-
-    public String get_templateName(){
-        return this._templateName;
     }
 
     public Object getValue(
@@ -95,18 +124,8 @@ public class Template {
         return null;
     }
 
-    public Boolean isVariableExist(
-            String varName){
-
-        if(_attributes != null && _attributes.containsKey(varName)){
-            return true;
-        }else{
-            if(this._parent != null){
-                return this._parent.isVariableExist(varName);
-            }
-        }
-
-        return null;
+    public String get_templateName(){
+        return this._templateName;
     }
 
     private void addExtendedTemplate(
@@ -133,8 +152,25 @@ public class Template {
         return this._blocks.get(blockName);
     }
 
+    public void addBlock(
+            Block newBlock,
+            templor.language_templor.NId blockName){
+
+        if(this._blocks.containsKey(blockName.getText())){
+            throw new TemplorException("Block " + newBlock.get_blockName() + " has already been defined", blockName);
+        }
+
+        this._blocks.put(blockName.getText(), newBlock);
+    }
+
     public Map<String, Block> get_blocks(){
        return this._blocks;
+    }
+
+    public void set_blocks(
+            Map<String, Block> blocks){
+
+        this._blocks = blocks;
     }
 
     public boolean hasBlock(
@@ -149,5 +185,9 @@ public class Template {
         }
 
         return false;
+    }
+
+    public Template get_parent(){
+        return this._parent;
     }
 }

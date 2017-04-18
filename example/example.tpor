@@ -152,7 +152,7 @@ template Student special Person {
     definition = super
     attributes = [super]
     blocks = [
-        append content[extra] = <{ + "Je suis étudiant et mon code permanent est " + {code} }>,
+        append content[extra] = <{ + " Je suis étudiant et mon code permanent est " + {code} }>,
         code = <{ <={ {{person}}.getCode() }=> }>
     ]
 }

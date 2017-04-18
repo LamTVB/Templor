@@ -1,8 +1,6 @@
 package templor.walker;
 
 import mino.language_mino.LexerException;
-import mino.language_mino.NStm_Block;
-import mino.language_mino.NTerm_Block;
 import mino.language_mino.ParserException;
 
 import mino.walker.TemplorFinder;
@@ -26,9 +24,8 @@ public class TemplatesFactory
 
     //TODO instead of string create an object Template
     private String templateDef;
-    private Template currentParentTemplate;
-    private Map<String, Block> currentBlocks;
     private Map<String, Object> templateAttributes = new HashMap<>();
+    private Template currentTemplate;
 
     public void visit(Node node){
         node.apply(this);
@@ -41,16 +38,6 @@ public class TemplatesFactory
         String template = this.templateDef;
         this.templateDef = null;
         return template;
-    }
-
-    private Map<String, Block> getBlocks(
-            Node node){
-
-        this.currentBlocks = new LinkedHashMap<>();
-        visit(node);
-        Map<String, Block> blocks = this.currentBlocks;
-        this.currentBlocks = null;
-        return blocks;
     }
 
     public Map<String, Template> getTemplatesMap(){
@@ -152,7 +139,7 @@ public class TemplatesFactory
 
     private mino.language_mino.Node parseTree(
             String templateDef,
-            NId location){
+            Token location){
 
         Reader reader = new StringReader(templateDef);
 
@@ -180,40 +167,50 @@ public class TemplatesFactory
         return syntaxTree;
     }
 
+    private Template buildTemplate(
+            NStm_Definition node){
+
+        Template parent = getParent(node.get_SpecialOpt());
+        return new Template(parent, node.get_TemplateName().getText());
+    }
+
+    private Template getParent(
+            NSpecialOpt node){
+
+        visit(node);
+        Template parent = this.currentTemplate;
+        this.currentTemplate = null;
+        return parent;
+    }
+
     @Override
-    public void caseStm_Create(
-            NStm_Create node) {
+    public void inStm_Definition(
+            NStm_Definition node) {
 
-        Template parentTemplate = null;
+        this.currentTemplate = buildTemplate(node);
+    }
 
-        if(node.get_SpecialOpt() instanceof NSpecialOpt_One){
-            String specialTemplateName = ((NSpecialOpt_One)node.get_SpecialOpt()).get_Special().get_TemplateName().getText();
-            if(!this.templatesMap.containsKey(specialTemplateName)){
-                throw new TemplorException("Template of name : " + specialTemplateName, node.get_TemplateName());
-            }
-            this.currentParentTemplate = parentTemplate = this.templatesMap.get(specialTemplateName);
-        }
+    @Override
+    public void outStm_Definition(
+            NStm_Definition node) {
 
-        String templateDef = getTemplateDef(node.get_Members());
-        Map<String, Object> currentAttributes = getAttributes(node.get_Members());
-        Map<String, Block> blocks = getBlocks(node.get_Members());
+        this.currentTemplate = null;
+    }
 
-        if(templateDef == null){
-            //no definition
-            if(parentTemplate == null){
-                throw new TemplorException("Template must be defined", node.get_TemplateName());
-            }else{
-                //herit from parent
-                templateDef = parentTemplate.get_templateDef();
-            }
-        }
-        Reader reader = new StringReader(templateDef);
+    @Override
+    public void caseStm_Definition(
+            NStm_Definition node) {
+
+        //collecting members
+        visit(node.get_Members());
+
+        Reader reader = new StringReader(this.currentTemplate.get_templateDef());
 
         mino.language_mino.Node syntaxTree = null;
         try {
             //TODO change name TemplorFinder == attributesVerifier
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            TemplorFinder engine = new TemplorFinder(currentAttributes);
+            TemplorFinder engine = new TemplorFinder(this.currentTemplate.get_attributes());
             engine.visit(syntaxTree);
         }
         catch (IOException e) {
@@ -232,11 +229,21 @@ public class TemplatesFactory
         }
 
         if(syntaxTree != null){
-            Template template = new Template(parentTemplate, node.get_TemplateName().getText(), templateDef,
-                    currentAttributes, syntaxTree, blocks);
 
-            this.templatesMap.put(node.get_TemplateName().getText(), template);
+            this.templatesMap.put(node.get_TemplateName().getText(), this.currentTemplate);
         }
+    }
+
+    @Override
+    public void caseSpecialOpt_One(
+            NSpecialOpt_One node) {
+
+        String specialTemplateName = node.get_Special().get_TemplateName().getText();
+        if(!this.templatesMap.containsKey(specialTemplateName)){
+            throw new TemplorException("Template of name : " + specialTemplateName + " is not defined.", node.get_Special().get_TemplateName());
+        }
+
+        this.currentTemplate = this.templatesMap.get(specialTemplateName);
     }
 
     //Attributes
@@ -244,55 +251,49 @@ public class TemplatesFactory
     public void caseMember_Attributes(
             NMember_Attributes node) {
 
-        this.templateAttributes = getAttributes(node.get_TemplateAttributes());
-        if (this.templateAttributes != null
-                && this.templateAttributes.size() == 0
-                && this.currentParentTemplate != null) {
-
-            //Attributes not used
-            this.templateAttributes = this.currentParentTemplate.get_attributes();
-        }else if(this.templateAttributes == null){
-
-            this.templateAttributes = new LinkedHashMap<>();
-        }
+        visit(node.get_TemplateAttributes());
     }
 
     @Override
     public void caseTemplateAttributes_More(
             NTemplateAttributes_More node) {
 
-        if(this.currentParentTemplate == null){
-            throw new TemplorException("Parent cannot be found", node.get_SuperKw());
+        Template parent = this.currentTemplate.get_parent();
+        if(parent == null){
+            throw new TemplorException("Undefined parent : inappropriate use of 'super' for template "
+                    + this.currentTemplate.get_templateName(), node.get_SuperKw());
         }
 
-        Map<String, Object> attributes = this.currentParentTemplate.get_attributes();
+        Map<String, Object> attributes = parent.get_attributes();
         attributes.putAll(getAttributes(node.get_ParametersList()));
-        this.templateAttributes = attributes;
+        this.currentTemplate.set_attributes(attributes);
     }
 
     @Override
     public void caseTemplateAttributes_Simple(
             NTemplateAttributes_Simple node) {
 
-        this.templateAttributes = getAttributes(node.get_ParametersList());
+        Map<String, Object> attributes = getAttributes(node.get_ParametersList());
+        this.currentTemplate.set_attributes(attributes);
     }
 
     @Override
     public void caseTemplateAttributes_Super(
             NTemplateAttributes_Super node) {
 
-        if(this.currentParentTemplate == null){
-            throw new TemplorException("Parent cannot be found", node.get_SuperKw());
+        Template parent = this.currentTemplate.get_parent();
+        if(parent == null){
+            throw new TemplorException("Parent is not defined for template " + this.currentTemplate.get_templateName(), node.get_SuperKw());
         }
 
-        this.templateAttributes = this.currentParentTemplate.get_attributes();
+        this.currentTemplate.set_attributes(parent.get_attributes());
     }
 
     @Override
     public void caseTemplateAttributes_Zero(
             NTemplateAttributes_Zero node) {
 
-        this.templateAttributes = null;
+        this.currentTemplate.set_attributes(new HashMap<>());
     }
 
     //Template definition
@@ -300,19 +301,36 @@ public class TemplatesFactory
     public void caseMember_Definition(
             NMember_Definition node) {
 
-        this.templateDef = getTemplateDef(node.get_TemplateDefinition());
+        String templateDef = getTemplateDef(node.get_TemplateDefinition());
+        Template parent = this.currentTemplate.get_parent();
+        if(templateDef == null){
+            //no definition
+            if(parent == null){
+                throw new TemplorException("Template must be defined", node.get_Eq());
+            }else{
+                //herit from parent
+                templateDef = parent.get_templateDef();
+            }
+        }
+
+        this.currentTemplate.setDefinition(templateDef);
+        this.currentTemplate.set_parsedTemplate(parseTree(templateDef, node.get_Eq()));
     }
 
     @Override
     public void caseTemplateDefinition_More(
             NTemplateDefinition_More node) {
 
-        if(this.currentParentTemplate == null){
-            throw new TemplorException("Parent cannot be found", node.get_SuperKw());
+        Template parent = this.currentTemplate.get_parent();
+
+        if(parent == null){
+            throw new TemplorException("Parent is undefined for template "
+                    + this.currentTemplate.get_templateName(), node.get_SuperKw());
         }
 
-        String templateDefinition = this.currentParentTemplate.get_templateDef();
-        this.templateDef = formatTemplateDef(templateDefinition.concat(node.get_TemplateDef().getText()));
+        String parentDefinition = parent.get_templateDef();
+        String templateDefinition = formatTemplateDef(node.get_TemplateDef().getText());
+        this.templateDef = formatTemplateDef(parentDefinition.concat(templateDefinition));
     }
 
     @Override
@@ -326,11 +344,12 @@ public class TemplatesFactory
     public void caseTemplateDefinition_Super(
             NTemplateDefinition_Super node) {
 
-        if(this.currentParentTemplate == null){
-            throw new TemplorException("Parent cannot be found", node.get_SuperKw());
+        Template parent = this.currentTemplate.get_parent();
+        if(parent == null){
+            throw new TemplorException("Undefined parent : inapropriate use of 'super' for template " + this.currentTemplate.get_templateName(), node.get_SuperKw());
         }
 
-        this.templateDef = this.currentParentTemplate.get_templateDef();
+        this.templateDef = parent.get_templateDef();
     }
 
     //Blocks
@@ -338,55 +357,61 @@ public class TemplatesFactory
     public void caseMember_Blocks(
             NMember_Blocks node) {
 
-        this.currentBlocks = getBlocks(node.get_BlocksList());
+        visit(node.get_BlocksList());
     }
 
     @Override
     public void caseBlockdef_Append(
             NBlockdef_Append node) {
 
-        if(this.currentParentTemplate == null){
-            throw new TemplorException("Undefined parent for this template", node.get_Eq());
+        Template parentTemplate = this.currentTemplate.get_parent();
+        if(parentTemplate == null){
+            throw new TemplorException("Undefined parent for template "
+                    + this.currentTemplate.get_templateName(), node.get_Eq());
         }
 
-        Block parentBlock = this.currentParentTemplate.getBlock(node.get_BlockName().getText());
+        Block parentBlock = parentTemplate.getBlock(node.get_BlockName().getText());
 
         String templateDef = formatTemplateDef(node.get_TemplateDef().getText());
         String parentBlockDefinition = parentBlock.get_definition();
-        String blockDefinition = null;
+        String blockDefinition;
 
         if(node.get_PosOpt() instanceof NPosOpt_One){
 
+            //Append text at a specific position
             String nameTemplateExtend = ((NPosOpt_One)node.get_PosOpt()).get_Id().getText();
             parentBlockDefinition = parentBlockDefinition.replace("[" + nameTemplateExtend + "]", templateDef);
             blockDefinition = formatTemplateDef(parentBlockDefinition);
         }else{
+            //no position then concat parent and son
             blockDefinition = formatTemplateDef(parentBlockDefinition.concat(templateDef));
         }
 
         mino.language_mino.Node parsedBlock = parseTree(blockDefinition, node.get_BlockName());
 
         Block newBlock = new Block(parentBlock.get_blockName(), blockDefinition, parentBlock, parsedBlock);
-        this.currentBlocks.put(node.get_BlockName().getText(), newBlock);
+        this.currentTemplate.addBlock(newBlock, node.get_BlockName());
     }
 
     @Override
     public void caseBlockdef_Prepend(
             NBlockdef_Prepend node) {
 
-        if(this.currentParentTemplate == null){
+        Template parentTemplate = this.currentTemplate.get_parent();
+        if(parentTemplate == null){
             //get currentTemplateName would be better
-            throw new TemplorException("Undefined parent for this template", node.get_Eq());
+            throw new TemplorException("Undefined parent for template "
+                    + this.currentTemplate.get_templateName(), node.get_Eq());
         }
 
-        Block parentBlock = this.currentParentTemplate.getBlock(node.get_BlockName().getText());
+        Block parentBlock = parentTemplate.getBlock(node.get_BlockName().getText());
 
         String templateDef = node.get_TemplateDef().getText();
         String blockDefinition = formatTemplateDef(templateDef.concat(parentBlock.get_definition()));
         mino.language_mino.Node parsedBlock = parseTree(blockDefinition, node.get_BlockName());
 
         Block newBlock = new Block(parentBlock.get_blockName(), blockDefinition, parentBlock, parsedBlock);
-        this.currentBlocks.put(node.get_BlockName().getText(), newBlock);
+        this.currentTemplate.addBlock(newBlock, node.get_BlockName());
     }
 
     @Override
@@ -397,7 +422,7 @@ public class TemplatesFactory
         mino.language_mino.Node parsedBlock = parseTree(blockDefinition, node.get_BlockName());
 
         Block newBlock = new Block(node.get_BlockName().getText(), blockDefinition, null, parsedBlock);
-        this.currentBlocks.put(node.get_BlockName().getText(), newBlock);
+        this.currentTemplate.addBlock(newBlock,node.get_BlockName());
     }
 
     @Override

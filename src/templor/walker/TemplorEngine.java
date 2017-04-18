@@ -43,8 +43,8 @@ public class TemplorEngine
     }
 
     @Override
-    public void caseStm_Create(
-            NStm_Create node) {
+    public void caseStm_Definition(
+            NStm_Definition node) {
         //Override this function in order to avoid parse named templatesMap on creation
     }
 
