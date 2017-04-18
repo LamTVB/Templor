@@ -5,13 +5,13 @@ import templor.language_templor.Token;
 /**
  * Created by Lam on 24/02/2017.
  */
-public class InterpreterException
+public class TemplorException
         extends RuntimeException{
 
     private final String _message;
     private final Token _node;
 
-    public InterpreterException(
+    public TemplorException(
             String message, Token node){
 
         this._message = message;

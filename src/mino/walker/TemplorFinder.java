@@ -16,14 +16,11 @@ public class TemplorFinder
         extends Walker{
 
     private final Map<String, Object> attributes;
-    private final Template _parent;
 
     public TemplorFinder(
-            Map<String, Object> attributes,
-            Template parent){
+            Map<String, Object> attributes){
 
         this.attributes = attributes;
-        this._parent = parent;
     }
 
     @Override
@@ -33,13 +30,10 @@ public class TemplorFinder
         String name = node.getText().replaceAll("\\{\\{", "")
                 .replaceAll("}}", "");
 
-        if(this.attributes != null && !this.attributes.containsKey(name) && this._parent == null){
+        if(this.attributes != null
+                && !this.attributes.containsKey(name)){
             //TODO gérer pour cactch l'erreur dans le visiteur TemplatesFactory
             throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
-        }else{
-            if(this._parent != null && !this._parent.isVariableExist(name)) {
-                throw new InterpreterException("Attribute " + name + " does not exist in this template ", node);
-            }
         }
     }
 

@@ -44,12 +44,12 @@ public class ClassTable {
         if(definition.get_TemplateOpt() instanceof NTemplateOpt_One){
 
             NTemplateOpt_One nTemplate = (NTemplateOpt_One)definition.get_TemplateOpt();
-            if(!this.nameToTemplateMap.containsKey(nTemplate.get_Id().getText())){
-                throw new InterpreterException("Template '" + nTemplate.get_Id().getText() +"' has not been initialized",
-                        nTemplate.get_Id());
+            if(!this.nameToTemplateMap.containsKey(nTemplate.get_Template().getText())){
+                throw new InterpreterException("Template '" + nTemplate.get_Template().getText() +"' has not been initialized",
+                        nTemplate.get_Template());
             }
 
-            template = this.nameToTemplateMap.get(nTemplate.get_Id().getText());
+            template = this.nameToTemplateMap.get(nTemplate.get_Template().getText());
         }
 
         ClassInfo classInfo;

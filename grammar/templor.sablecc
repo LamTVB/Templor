@@ -9,10 +9,12 @@ Lexer
     string_char = Any - (#10 | #13);
     float = number '.' number;
 
-
     id = lower name_char*;
     name_char = upper | lower | '_';
+    template_name = upper name_char*;
     template_def = Shortest '<{' Any* '}>';
+    template_kw = 'template';
+    super_kw = 'super';
 
     blank = ' ' | #13 | #10 | #9;
     comment = Shortest '/*' Any* '*/';
@@ -32,29 +34,46 @@ Parser
         {zero:} ;
 
     stm =
-        {print:} 'print' [lp:]'(' add_template ')' ';' |
-        {render:} 'render' [lp:]'(' add_template ')' ';'|
-        {create:} type_opt [template_name:]id '(' parameters_list_opt ')' special_opt add_template |
+        {print:} 'print' [lp:]'(' template_name ')' ';' |
+        {render:} 'render' [lp:]'(' template_name ')' ';'|
+        {create:} template_kw template_name special_opt '{' members '}' |
         {populate:} [template_name:]id '.' [attribute_name:]id '=' exp ';';
 
-    type_opt =
-        {one:} type |
+    members =
+        members member | ;
+
+    member =
+        {definition:} 'definition' [eq:]'=' template_definition |
+        {attributes:} 'attributes' [eq:]'=' '[' template_attributes ']' |
+        {blocks:} 'blocks' [eq:]'=' '[' blocks_list ']';
+
+    blocks_list =
+        {more:} blocks_list ',' blockdef|
+        {one:} blockdef;
+
+    blockdef =
+        {append:} 'append' [block_name:]id pos_opt [eq:]'=' template_def |
+        {prepend:} 'prepend' [block_name:]id [eq:]'=' template_def |
+        {definition:} [block_name:]id [eq:]'=' template_def ;
+
+    pos_opt =
+        {one:}'[' id ']' | {zero:} ;
+
+    template_definition =
+        {more:} super_kw ',' template_def |
+        {super:} super_kw |
+        {simple:} template_def ;
+
+    template_attributes =
+        {more:} super_kw ',' parameters_list |
+        {super:} super_kw |
+        {simple:} parameters_list |
         {zero:} ;
-
-    type =
-        {entity:} 'Entity';
-
-    add_template =
-        {add:} add_template [plus:]'+' template |
-        {simple:} template;
 
     template =
         {template_def:} template_def |
         {file_path:} string |
         {template_name:} id;
-
-    parameters_list_opt =
-        parameters_list |;
 
     parameters_list =
         parameter additional_parameters;
@@ -87,7 +106,7 @@ Parser
         {zero:} ;
 
     special =
-        'special' [template_name:]id;
+        'special' template_name;
 
 
 

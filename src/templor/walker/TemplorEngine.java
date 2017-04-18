@@ -4,7 +4,7 @@ import mino.language_mino.Parser;
 import mino.language_mino.ParserException;
 import mino.language_mino.LexerException;
 import mino.walker.InterpreterEngine;
-import templor.exception.InterpreterException;
+import templor.exception.TemplorException;
 import templor.language_templor.*;
 import templor.language_templor.Node;
 import templor.language_templor.Walker;
@@ -38,7 +38,7 @@ public class TemplorEngine
             NProgram node) {
 
         templatesFactory.visit(node);
-        this.templatesMap = templatesFactory.getTemplates();
+        this.templatesMap = templatesFactory.getTemplatesMap();
         node.applyOnChildren(this);
     }
 
@@ -52,12 +52,12 @@ public class TemplorEngine
     public void caseStm_Print(
             NStm_Print node) {
 
-        Template template = getTemplate(node.get_AddTemplate());
+        Template template = this.templatesMap.get(node.get_TemplateName().getText());
 
         if(template != null && template.get_templateDef() != null){
             System.out.println(formatTemplateDef(template.get_templateDef()));
         }else{
-            throw new InterpreterException("Template cannot be null", node.get_Lp());
+            throw new TemplorException("Template cannot be null", node.get_Lp());
         }
     }
 
@@ -70,7 +70,7 @@ public class TemplorEngine
         if(this.templatesMap.containsKey(template_name)){
             this.tempTemplate = this.templatesMap.get(template_name);
         }else{
-            throw new InterpreterException("Template of name " + template_name + " is unknown", node.get_Id());
+            throw new TemplorException("Template of name " + template_name + " is unknown", node.get_Id());
         }
     }
 
@@ -81,67 +81,32 @@ public class TemplorEngine
         Template receiver = this.templatesMap.get(node.get_TemplateName().getText());
 
         if(receiver == null){
-            throw new InterpreterException("Template of name " + node.get_TemplateName().getText() + " does not exist", node.get_TemplateName());
+            throw new TemplorException("Template of name " + node.get_TemplateName().getText() + " does not exist", node.get_TemplateName());
         }
 
         Object exp = getExpVal(node.get_Exp());
         String attributeName = node.get_AttributeName().getText();
 
         if(attributeName == null){
-            throw new InterpreterException("Attribute name cannot be null", node.get_AttributeName());
+            throw new TemplorException("Attribute name cannot be null", node.get_AttributeName());
         }else if(exp == null){
-            throw new InterpreterException("Expression cannot be null", node.get_TemplateName());
-        }else{
-            receiver.addOrUpdateAttribute(attributeName, exp);
+            throw new TemplorException("Expression cannot be null", node.get_TemplateName());
         }
+
+        receiver.addOrUpdateAttribute(attributeName, exp);
     }
 
     @Override
     public void caseStm_Render(
             NStm_Render node) {
 
-        Template template = getTemplate(node.get_AddTemplate());
+        Template template = this.templatesMap.get(node.get_TemplateName().getText());
 
         if(template != null){
             executeMino(template);
         }else{
-            throw new InterpreterException("Template to render cannot be null", node.get_Lp());
+            throw new TemplorException("Template to render cannot be null", node.get_Lp());
         }
-    }
-
-    @Override
-    public void caseAddTemplate_Add(
-            NAddTemplate_Add node) {
-
-        Template rightTemplate = getTemplate(node.get_AddTemplate());
-        Template leftTemplate = getTemplate(node.get_Template());
-
-        if(rightTemplate == null){
-            throw new InterpreterException("Right template should not be null", node.get_Plus());
-        }else if(leftTemplate == null){
-            throw new InterpreterException("Left template should not be null", node.get_Plus());
-        }else{
-            String rightTemplateDef = rightTemplate.get_templateDef();
-            String leftTemplateDef = leftTemplate.get_templateDef();
-
-            String template = rightTemplateDef.concat(leftTemplateDef);
-            Map<String, Object> attributes = new LinkedHashMap<>();
-            if(rightTemplate.get_attributes() != null){
-                attributes.putAll(rightTemplate.get_attributes());
-            }
-            if(leftTemplate.get_attributes() != null){
-                attributes.putAll(leftTemplate.get_attributes());
-            }
-
-            this.tempTemplate = new Template(null, null, template, attributes, null, null);
-        }
-    }
-
-    @Override
-    public void caseAddTemplate_Simple(
-            NAddTemplate_Simple node) {
-
-        visit(node.get_Template());
     }
 
     @Override
@@ -186,8 +151,9 @@ public class TemplorEngine
         String templateDef = formatTemplateDef(templateToParse.get_templateDef());
 
         if(templateDef == null){
-            throw new InterpreterException("Template def is null", null);
+            throw new TemplorException("Template def is null", null);
         }
+
         StringReader reader = new StringReader(templateDef);
         mino.language_mino.Node syntaxTree = null;
         try {

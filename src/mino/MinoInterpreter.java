@@ -22,6 +22,7 @@ import java.io.*;
 import mino.exception.*;
 import mino.language_mino.*;
 import mino.walker.*;
+import templor.exception.TemplorException;
 
 public class MinoInterpreter {
 
@@ -85,6 +86,11 @@ public class MinoInterpreter {
         catch (InterpreterException e) {
             System.out.flush();
             System.err.println("INTERPRETER ERROR: " + e.getMessage() + ".");
+            interpreterEngine.printStackTrace();
+            System.exit(1);
+        }catch(TemplorException e){
+            System.out.flush();
+            System.err.println("TEMPLOR ERROR: " + e.getMessage() + ".");
             interpreterEngine.printStackTrace();
             System.exit(1);
         }
