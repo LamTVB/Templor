@@ -24,8 +24,8 @@ Lexer
   field_name = '_' lower name_char*;
   invalid_id = ('_' | lower | upper)+;
   interpolation = '{{' id '}}';
-  include_template = '{' id '}';
   template_kw = 'template';
+  template_extend = '[' id ']';
 
   name_char = upper | lower | '_';
   upper = 'A'..'Z';
@@ -43,7 +43,7 @@ Lexer
     invalid_id;
 
   Ignored
-    blank, comment;
+    blank, comment, template_extend;
 
 Parser
 
@@ -62,7 +62,7 @@ Parser
     'class' class_name special_opt template_opt '{' members '}';
 
   template_opt =
-    {one:} template_kw id |
+    {one:} template_kw [template:]class_name |
     {zero:} ;
 
   special_opt =
@@ -119,10 +119,11 @@ Parser
     {if:} 'if' [l_par:]'(' exp ')' '{' stms '}' else_opt |
     {return:} [return_kwd:]'return' exp_opt ';' |
     {interpolation:} interpolation|
-    {template_integration:} template |
-    {populate:} template '.' id '=' exp ';' |
+    {template_integration:} include_template |
+    {block:} '{' [block_name:]id '}' |
+    {populate:} include_template '.' id '=' exp ';' |
     {foreach:} 'foreach' [l_par:]'(' id 'in' [array_name:]id ')' '{' stms '}' |
-    {expression:} 'template_exp' ':' exp ';';
+    {expression:} '<={' exp '}=>';
 
   array_opt =
     '[]' | ;
@@ -182,12 +183,13 @@ Parser
     {false:} 'false' |
     {string:} string |
     {interpolation:} interpolation |
-    {template:} template |
+    {template:} include_template |
+    {block:} '{' [block_name:]id '}' |
     {array:} '[' exp_list_opt ']';
 
-  template =
+  include_template =
     {self:} 'self' '::' template_kw |
-    {simple:} include_template;
+    {simple:} '{' [template_name:]class_name '}';
 
   call =
     right_unary_exp '.' id '(' exp_list_opt ')';

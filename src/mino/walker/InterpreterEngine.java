@@ -23,6 +23,7 @@ import java.util.*;
 import mino.exception.*;
 import mino.language_mino.*;
 import mino.structure.*;
+import templor.structure.Block;
 import templor.structure.Template;
 
 public class InterpreterEngine
@@ -140,7 +141,7 @@ public class InterpreterEngine
     }
 
     private Template getTemplate(
-            NTemplate node){
+            NIncludeTemplate node){
 
         visit(node);
         Template expTemplate = this.expTemplate;
@@ -461,6 +462,62 @@ public class InterpreterEngine
             NStm_SelfCall node) {
 
         getExpEval(node.get_SelfCall());
+    }
+
+    @Override
+    public void caseStm_Foreach(
+            NStm_Foreach node) {
+
+        Instance right = this.currentFrame.getVar(node.get_ArrayName());
+
+        if(!right.isa(this.arrayClassInfo)){
+            throw new InterpreterException("Right parameter must be an array", node.get_ArrayName());
+        }
+
+        List<Instance> values = ((ArrayInstance)right).getValue();
+        for(Instance b_instance : values){
+
+            this.currentFrame.setVar(node.get_Id(), b_instance);
+            visit(node.get_Stms());
+        }
+    }
+
+    @Override
+    public void caseStm_Populate(
+            NStm_Populate node) {
+
+        Template template = getTemplate(node.get_IncludeTemplate());
+        String attributeName = node.get_Id().getText();
+        Instance exp = getExpEval(node.get_Exp());
+
+        if(template != null){
+            template.addOrUpdateAttribute(attributeName, exp);
+        }
+    }
+
+    @Override
+    public void caseStm_TemplateIntegration(
+            NStm_TemplateIntegration node) {
+
+        Template oldTemplate = this._currentTemplate;
+        this._currentTemplate = getTemplate(node.get_IncludeTemplate());
+        visit(this._currentTemplate.get_parsedTemplate());
+        this._currentTemplate = oldTemplate;
+    }
+
+    @Override
+    public void caseStm_Expression(
+            NStm_Expression node) {
+
+        this.expEval = getExpEval(node.get_Exp());
+    }
+
+    @Override
+    public void caseStm_Block(
+            NStm_Block node) {
+
+        Block block = this._currentTemplate.getBlock(node.get_BlockName().getText());
+        visit(block.get_parsedBlock());
     }
 
     @Override
@@ -935,20 +992,68 @@ public class InterpreterEngine
     }
 
     @Override
+    public void caseTerm_Array(
+            NTerm_Array node) {
+
+        List<NExp> expList = getExpList(node.get_ExpListOpt());
+        List<Instance> valueList = new ArrayList<>();
+
+        for (NExp exp : expList) {
+            valueList.add(getExpEval(exp));
+        }
+
+        this.expEval = this.arrayClassInfo.newArray(valueList);
+    }
+
+    @Override
     public void caseTerm_Template(
             NTerm_Template node) {
 
-
-
         Template oldTemplate = this._currentTemplate;
-        this._currentTemplate = getTemplate(node.get_Template());
+        this._currentTemplate = getTemplate(node.get_IncludeTemplate());
         this.expEval = getExpEval(this._currentTemplate.get_parsedTemplate());
         this._currentTemplate = oldTemplate;
     }
 
     @Override
-    public void caseTemplate_Self(
-            NTemplate_Self node) {
+    public void caseTerm_Block(
+            NTerm_Block node) {
+
+        String blockName = node.get_BlockName().getText();
+        Block block = this._currentTemplate.getBlock(blockName);
+        this.expEval = getExpEval(block.get_parsedBlock());
+    }
+
+    @Override
+    public void caseTerm_Interpolation(
+            NTerm_Interpolation node) {
+
+        String attributeName = node.get_Interpolation().getText().replaceAll("\\{\\{", "").replaceAll("}}","");
+        Object value = this._currentTemplate.getValue(attributeName);
+
+        if(value instanceof String){
+            this.expEval = this.stringClassInfo.newString((String)value);
+        }else if(value instanceof Integer){
+            this.expEval = this.integerClassInfo.newInteger(BigInteger.valueOf((Integer)value));
+        }else if(value instanceof Float){
+            this.expEval = this.floatClassInfo.newFloat((Float)value);
+        }else if(value instanceof Instance){
+            this.expEval = (Instance)value;
+        }else if(value instanceof Boolean){
+            Boolean booleanValue = (Boolean)value;
+            this.expEval = booleanValue ? this.booleanClassInfo.getTrue() : this.booleanClassInfo.getFalse();
+        }else if(value == null){
+            throw new InterpreterException("Attribute "
+                    + attributeName + " is not defined in template "
+                    + this._currentTemplate.get_templateName(), node.get_Interpolation());
+        }else{
+            throw new InterpreterException("Error", node.get_Interpolation());
+        }
+    }
+
+    @Override
+    public void caseIncludeTemplate_Self(
+            NIncludeTemplate_Self node) {
 
         if(!this.currentFrame.getReceiver().getClassInfo().hasTemplate()) {
             throw new InterpreterException("Using self on undefined template on class "
@@ -959,12 +1064,14 @@ public class InterpreterEngine
     }
 
     @Override
-    public void caseTemplate_Simple(
-            NTemplate_Simple node) {
+    public void caseIncludeTemplate_Simple(
+            NIncludeTemplate_Simple node) {
 
-        String templateName = node.get_IncludeTemplate().getText().substring(1, node.get_IncludeTemplate().getText().length() - 1);
+        String templateName = node.get_TemplateName().getText();
         if(!this.nameTemplateMap.containsKey(templateName)){
-            throw new InterpreterException("Template '" + templateName + "' was not initialised", node.get_IncludeTemplate());
+            throw new InterpreterException("Template "
+                    + templateName
+                    + " is not defined", node.get_TemplateName());
         }
 
         this.expTemplate = this.nameTemplateMap.get(templateName);
@@ -1040,102 +1147,6 @@ public class InterpreterEngine
             NAdditionalExp node) {
 
         this.expList.add(node.get_Exp());
-    }
-
-    @Override
-    public void caseStm_Populate(
-            NStm_Populate node) {
-
-        Template template = getTemplate(node.get_Template());
-        String attributeName = node.get_Id().getText();
-        Instance exp = getExpEval(node.get_Exp());
-
-        if(template != null){
-            template.addOrUpdateAttribute(attributeName, exp);
-        }else{
-            throw new InterpreterException("Template must not be null", node.get_Id());
-        }
-    }
-
-    @Override
-    public void caseInterpolation(
-            NInterpolation node) {
-
-        String attributeName = node.getText().replaceAll("\\{\\{", "").replaceAll("}}","");
-        Object value = this._currentTemplate.getValue(attributeName);
-
-        if(value instanceof String){
-            this.expEval = this.stringClassInfo.newString((String)value);
-        }else if(value instanceof Integer){
-            this.expEval = this.integerClassInfo.newInteger(BigInteger.valueOf((Integer)value));
-        }else if(value instanceof Float){
-            this.expEval = this.floatClassInfo.newFloat((Float)value);
-        }else if(value instanceof Instance){
-            this.expEval = (Instance)value;
-        }else if(value instanceof Boolean){
-            Boolean booleanValue = (Boolean)value;
-            this.expEval = booleanValue ? this.booleanClassInfo.getTrue() : this.booleanClassInfo.getFalse();
-        }else if(value == null){
-            throw new InterpreterException("Attribute " + attributeName + " cannot be null in template " + this._currentTemplate.get_templateName(), node);
-        }else{
-            throw new InterpreterException("Error", node);
-        }
-    }
-
-    @Override
-    public void caseTerm_Interpolation(
-            NTerm_Interpolation node) {
-
-        this.expEval = getExpEval(node.get_Interpolation());
-    }
-
-    @Override
-    public void caseStm_TemplateIntegration(
-            NStm_TemplateIntegration node) {
-
-        Template oldTemplate = this._currentTemplate;
-        this._currentTemplate = getTemplate(node.get_Template());
-        visit(this._currentTemplate.get_parsedTemplate());
-        this._currentTemplate = oldTemplate;
-    }
-
-    @Override
-    public void caseStm_Expression(
-            NStm_Expression node) {
-
-        this.expEval = getExpEval(node.get_Exp());
-    }
-
-    @Override
-    public void caseTerm_Array(
-            NTerm_Array node) {
-
-        List<NExp> expList = getExpList(node.get_ExpListOpt());
-        List<Instance> valueList = new ArrayList<>();
-
-        for (NExp exp : expList) {
-            valueList.add(getExpEval(exp));
-        }
-
-        this.expEval = this.arrayClassInfo.newArray(valueList);
-    }
-
-    @Override
-    public void caseStm_Foreach(
-            NStm_Foreach node) {
-
-        Instance right = this.currentFrame.getVar(node.get_ArrayName());
-
-        if(!right.isa(this.arrayClassInfo)){
-            throw new InterpreterException("Right parameter must be an array", node.get_ArrayName());
-        }
-
-        List<Instance> values = ((ArrayInstance)right).getValue();
-        for(Instance b_instance : values){
-
-            this.currentFrame.setVar(node.get_Id(), b_instance);
-            visit(node.get_Stms());
-        }
     }
 
     public void integerPlus(

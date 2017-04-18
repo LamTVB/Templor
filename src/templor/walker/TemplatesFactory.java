@@ -333,18 +333,71 @@ public class TemplatesFactory
         this.templateDef = this.currentParentTemplate.get_templateDef();
     }
 
+    //Blocks
+    @Override
+    public void caseMember_Blocks(
+            NMember_Blocks node) {
 
-
-        }
-        }
-
-
-        }
-
-
+        this.currentBlocks = getBlocks(node.get_BlocksList());
     }
 
+    @Override
+    public void caseBlockdef_Append(
+            NBlockdef_Append node) {
 
+        if(this.currentParentTemplate == null){
+            throw new TemplorException("Undefined parent for this template", node.get_Eq());
+        }
+
+        Block parentBlock = this.currentParentTemplate.getBlock(node.get_BlockName().getText());
+
+        String templateDef = formatTemplateDef(node.get_TemplateDef().getText());
+        String parentBlockDefinition = parentBlock.get_definition();
+        String blockDefinition = null;
+
+        if(node.get_PosOpt() instanceof NPosOpt_One){
+
+            String nameTemplateExtend = ((NPosOpt_One)node.get_PosOpt()).get_Id().getText();
+            parentBlockDefinition = parentBlockDefinition.replace("[" + nameTemplateExtend + "]", templateDef);
+            blockDefinition = formatTemplateDef(parentBlockDefinition);
+        }else{
+            blockDefinition = formatTemplateDef(parentBlockDefinition.concat(templateDef));
+        }
+
+        mino.language_mino.Node parsedBlock = parseTree(blockDefinition, node.get_BlockName());
+
+        Block newBlock = new Block(parentBlock.get_blockName(), blockDefinition, parentBlock, parsedBlock);
+        this.currentBlocks.put(node.get_BlockName().getText(), newBlock);
+    }
+
+    @Override
+    public void caseBlockdef_Prepend(
+            NBlockdef_Prepend node) {
+
+        if(this.currentParentTemplate == null){
+            //get currentTemplateName would be better
+            throw new TemplorException("Undefined parent for this template", node.get_Eq());
+        }
+
+        Block parentBlock = this.currentParentTemplate.getBlock(node.get_BlockName().getText());
+
+        String templateDef = node.get_TemplateDef().getText();
+        String blockDefinition = formatTemplateDef(templateDef.concat(parentBlock.get_definition()));
+        mino.language_mino.Node parsedBlock = parseTree(blockDefinition, node.get_BlockName());
+
+        Block newBlock = new Block(parentBlock.get_blockName(), blockDefinition, parentBlock, parsedBlock);
+        this.currentBlocks.put(node.get_BlockName().getText(), newBlock);
+    }
+
+    @Override
+    public void caseBlockdef_Definition(
+            NBlockdef_Definition node) {
+
+        String blockDefinition = formatTemplateDef(node.get_TemplateDef().getText());
+        mino.language_mino.Node parsedBlock = parseTree(blockDefinition, node.get_BlockName());
+
+        Block newBlock = new Block(node.get_BlockName().getText(), blockDefinition, null, parsedBlock);
+        this.currentBlocks.put(node.get_BlockName().getText(), newBlock);
     }
 
     @Override

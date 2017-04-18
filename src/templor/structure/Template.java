@@ -1,9 +1,7 @@
 package templor.structure;
 
 import mino.language_mino.Node;
-import mino.structure.ClassInfo;
-import mino.structure.Instance;
-import templor.exception.InterpreterException;
+import templor.exception.TemplorException;
 
 import java.util.*;
 
@@ -24,7 +22,7 @@ public class Template {
 
     private Map<String, Template> extendedTemplates = new HashMap<>();
 
-    private Type type;
+    private Map<String, Block> _blocks = new HashMap<>();
 
     public Template(
             Template parent,
@@ -32,14 +30,14 @@ public class Template {
             String template_def,
             Map<String, Object> attributes,
             Node nodeTemplateDef,
-            Type templateType){
+            Map<String, Block> blocks){
 
         this._parent = parent;
         this._templateName = name;
         this._templateDef = template_def;
         this._attributes = attributes;
         this._parsedTemplate = nodeTemplateDef;
-        this.type = templateType;
+        this._blocks = blocks;
         heritParent();
     }
 
@@ -61,12 +59,12 @@ public class Template {
             Object value){
 
         if(!this._attributes.containsKey(name)){
-            throw new InterpreterException("Attribute of name " + name + " does not exist", null);
+            throw new TemplorException("Attribute of name " + name + " does not exist in " + get_templateName(), null);
         }else if(this._attributes != null){
             this._attributes.put(name, value);
         }else{
             //TODO handle interpreterException to give node
-            throw new InterpreterException("There is no attribute for the template of name " + _templateName, null);
+            throw new TemplorException("There is no attribute for the template of name " + get_templateName(), null);
         }
     }
 
@@ -115,13 +113,41 @@ public class Template {
             Template template){
 
         if(this.extendedTemplates.containsKey(template.get_templateName())){
-            throw new InterpreterException("Cannot add another subTemplate of name + " + template.get_templateName(), null);
+            throw new TemplorException("Cannot add another subTemplate of name + " + template.get_templateName(), null);
         }
 
         this.extendedTemplates.put(template.get_templateName(), template);
     }
 
-    public Type getType(){
-        return this.type;
+    public Block getBlock(
+            String blockName){
+
+        if(!this._blocks.containsKey(blockName)){
+            if(this._parent == null){
+                throw new TemplorException("Cannot find block " + blockName + " in " + get_templateName(), null);
+            }
+
+            return this._parent.getBlock(blockName);
+        }
+
+        return this._blocks.get(blockName);
+    }
+
+    public Map<String, Block> get_blocks(){
+       return this._blocks;
+    }
+
+    public boolean hasBlock(
+            String blockName){
+
+        if(this._blocks.containsKey(blockName)){
+            return true;
+        }else{
+            if(this._parent != null){
+                return this._parent.hasBlock(blockName);
+            }
+        }
+
+        return false;
     }
 }
