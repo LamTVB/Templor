@@ -113,8 +113,6 @@ public class TemplorEngine
     public void caseTemplate_TemplateDef(
             NTemplate_TemplateDef node) {
 
-        Template template = this.templatesFactory.createAnonymousTemplate(node.get_TemplateDef());
-        this.tempTemplate = template;
     }
 
     @Override

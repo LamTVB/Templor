@@ -3,7 +3,7 @@ package templor.walker;
 import mino.language_mino.LexerException;
 import mino.language_mino.ParserException;
 
-import mino.walker.TemplorFinder;
+import mino.walker.TemplateVerifier;
 import templor.exception.TemplorException;
 import templor.language_templor.*;
 import templor.language_templor.Node;
@@ -53,7 +53,7 @@ public class TemplatesFactory
 
         try {
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            TemplorFinder engine = new TemplorFinder(null);
+            TemplateVerifier engine = new TemplateVerifier(null);
             engine.visit(syntaxTree);
         }
         catch (IOException e) {
@@ -152,14 +152,14 @@ public class TemplatesFactory
             System.exit(1);
         }
         catch (ParserException e) {
-            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of template : "
-                    + location.getText() + " while initializing template at line "
+            System.err.println("SYNTAX ERROR: " + e.getMessage()
+                    + " while initializing template at line "
                     + location.getLine() + " pos " + location.getPos());
             System.exit(1);
         }
         catch (LexerException e) {
-            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of template : "
-                    + location.getText() + " while initializing template at line "
+            System.err.println("LEXICAL ERROR: " + e.getMessage()
+                    + " while initializing template at line "
                     + location.getLine() + " pos " + location.getPos());
             System.exit(1);
         }
@@ -204,13 +204,26 @@ public class TemplatesFactory
         //collecting members
         visit(node.get_Members());
 
+        if(this.currentTemplate.get_templateDef() == null){
+            if(this.currentTemplate.get_parent() == null){
+                throw new TemplorException("Template "
+                        + this.currentTemplate.get_templateName()
+                        + "needs a definition ", node.get_TemplateName());
+            }
+
+            String templateDef = this.currentTemplate.get_parent().get_templateDef();
+            this.currentTemplate.setDefinition(templateDef);
+            mino.language_mino.Node parsedNode = parseTree(templateDef, node.get_TemplateName());
+            this.currentTemplate.set_parsedTemplate(parsedNode);
+        }
+
         Reader reader = new StringReader(this.currentTemplate.get_templateDef());
 
         mino.language_mino.Node syntaxTree = null;
         try {
-            //TODO change name TemplorFinder == attributesVerifier
+            //TODO change name TemplateVerifier == attributesVerifier
             syntaxTree = new mino.language_mino.Parser(reader).parse();
-            TemplorFinder engine = new TemplorFinder(this.currentTemplate.get_attributes());
+            TemplateVerifier engine = new TemplateVerifier(this.currentTemplate);
             engine.visit(syntaxTree);
         }
         catch (IOException e) {
@@ -218,18 +231,17 @@ public class TemplatesFactory
             System.exit(1);
         }
         catch (ParserException e) {
-            System.err.println("SYNTAX ERROR: " + e.getMessage() + " on definition of templateDef : "
+            System.err.println("SYNTAX ERROR: " + e.getMessage() + " definition of templateDef : "
                     + node.get_TemplateName().getText() + " while initializing template");
             System.exit(1);
         }
         catch (LexerException e) {
-            System.err.println("LEXICAL ERROR: " + e.getMessage() + " on definition of templateDef : "
+            System.err.println("LEXICAL ERROR: " + e.getMessage() + " definition of templateDef : "
                     + node.get_TemplateName().getText() + " while initializing template");
             System.exit(1);
         }
 
         if(syntaxTree != null){
-
             this.templatesMap.put(node.get_TemplateName().getText(), this.currentTemplate);
         }
     }
@@ -379,8 +391,8 @@ public class TemplatesFactory
         if(node.get_PosOpt() instanceof NPosOpt_One){
 
             //Append text at a specific position
-            String nameTemplateExtend = ((NPosOpt_One)node.get_PosOpt()).get_Id().getText();
-            parentBlockDefinition = parentBlockDefinition.replace("[" + nameTemplateExtend + "]", templateDef);
+            String index = ((NPosOpt_One)node.get_PosOpt()).get_Id().getText();
+            parentBlockDefinition = parentBlockDefinition.replace("[" + index + "]", templateDef);
             blockDefinition = formatTemplateDef(parentBlockDefinition);
         }else{
             //no position then concat parent and son
