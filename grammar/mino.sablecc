@@ -77,25 +77,29 @@ Parser
     'special' class_name;
 
   member =
-    {field:} 'var' field_name ';' |
-    {method:} 'fun' id '(' id_list_opt ')' '{' stms '}' |
-    {operator:} 'fun' operator '(' id_list_opt ')' '{' stms '}' |
-    {primitive_method:} 'primitive' id '(' id_list_opt ')' ';' |
-    {primitive_operator:} 'primitive' operator '(' id_list_opt ')' ';';
+    {field:} class_name field_name ';' |
+    {method:} 'fun' id '(' id_list_opt ')' return_opt '{' stms '}' |
+    {operator:} 'fun' operator '(' id_list_opt ')' return_opt '{' stms '}' |
+    {primitive_method:} 'primitive' id '(' id_list_opt ')' return_opt ';' |
+    {primitive_operator:} 'primitive' operator '(' id_list_opt ')' return_opt ';';
+
+  return_opt =
+    {one:} ':' class_name |
+    {zero:} ;
 
   id_list_opt =
     {one:} id_list |
     {zero:} ;
 
   id_list =
-    id additional_ids;
+     class_name id additional_ids;
 
   additional_ids =
     {more:} additional_ids additional_id |
     {zero:} ;
 
   additional_id =
-    ',' id;
+    ',' class_name id;
 
   operator =
     {plus:} [plus:]'+' |
@@ -111,7 +115,7 @@ Parser
     {mult:} [mult:] '*';
 
   stm =
-    {var_assign:} id array_opt '=' exp ';' |
+    {var_assign:} class_name_opt array_opt id assign_opt ';' |
     {field_assign:} field_name '=' exp ';' |
     {call:} call ';' |
     {self_call:} self_call ';' |
@@ -127,6 +131,14 @@ Parser
 
   array_opt =
     '[]' | ;
+
+  assign_opt =
+    {one:} '=' exp |
+    {zero:} ;
+
+  class_name_opt =
+    {one:} class_name |
+    {zero:} ;
 
   exp_opt =
     {one:} exp |

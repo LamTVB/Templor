@@ -30,9 +30,10 @@ public class NormalMethodInfo
     NormalMethodInfo(
             MethodTable methodTable,
             NMember_Method definition,
-            List<NId> params) {
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam) {
 
-        super(methodTable, params);
+        super(methodTable, params, returnParam);
         this.definition = definition;
     }
 

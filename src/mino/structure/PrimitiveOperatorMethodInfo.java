@@ -48,16 +48,17 @@ public class PrimitiveOperatorMethodInfo
     PrimitiveOperatorMethodInfo(
             MethodTable methodTable,
             NMember_PrimitiveOperator definition,
-            List<NId> params,
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam,
             Token operatorToken) {
 
-        super(methodTable, params);
+        super(methodTable, params, returnParam);
         this.definition = definition;
         this.operatorToken = operatorToken;
 
         if (getName().equals("+")) {
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method + must have a single parameter", operatorToken);
             }
 
@@ -71,24 +72,24 @@ public class PrimitiveOperatorMethodInfo
                 this.operation = Operation.FLOAT_PLUS;
             }
             else {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method + is not primitive in class " + className,
                         operatorToken);
             }
         }
         else if (getName().equals("==")) {
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method == must have a single parameter", operatorToken);
             }
 
             String className = methodTable.getClassInfo().getName();
-            throw new InterpreterException(
+            throw new SemanticException(
                     "method == is not primitive in class " + className,
                     operatorToken);
         }else if (getName().equals("/")){
             if(getParamCount() != 1){
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method / must have a single parameter ", operatorToken);
             }
 
@@ -98,14 +99,14 @@ public class PrimitiveOperatorMethodInfo
             }else if(className.equals("Float")){
                 this.operation = Operation.FLOAT_DIV;
             }else{
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method / is not primitive in class " + className,
                         operatorToken);
             }
         }
         else if (getName().equals("*")){
             if(getParamCount() != 1){
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method * must have a single parameter ", operatorToken);
             }
 
@@ -115,14 +116,14 @@ public class PrimitiveOperatorMethodInfo
             }else if(className.equals("Float")){
                 this.operation = Operation.FLOAT_MULT;
             }else{
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method * is not primitive in class " + className,
                         operatorToken);
             }
         }
         else if (getName().equals("%")){
             if(getParamCount() != 1){
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method % must have a single parameter ", operatorToken);
             }
 
@@ -130,14 +131,14 @@ public class PrimitiveOperatorMethodInfo
             if(className.equals("Integer")){
                 this.operation = Operation.INTEGER_MODUL;
             }else{
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method % is not primitive in class " + className,
                         operatorToken);
             }
         }
         else if (getName().equals("-")){
             if(getParamCount() != 1){
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method - must have a single parameter ", operatorToken);
             }
 
@@ -147,7 +148,7 @@ public class PrimitiveOperatorMethodInfo
             }else if(className.equals("Float")){
                 this.operation = Operation.FLOAT_MINUS;
             }else{
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method - is not allowed on class " + className,
                         operatorToken);
             }

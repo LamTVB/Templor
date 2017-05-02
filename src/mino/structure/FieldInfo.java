@@ -38,4 +38,9 @@ public class FieldInfo {
         return this.definition.get_FieldName().getText();
     }
 
+    public NClassName getClassName(){
+
+        return this.definition.get_ClassName();
+    }
+
 }

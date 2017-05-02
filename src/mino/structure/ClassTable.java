@@ -117,4 +117,36 @@ public class ClassTable {
     public void setNameToTemplateMap(Map<String, Template> templates){
         this.nameToTemplateMap = templates;
     }
+
+    public void printVirtualTables(){
+
+        for(Map.Entry<String, ClassInfo> classInfo : nameToClassInfoMap.entrySet()){
+            LinkedHashMap<String, MethodInfo> virtualTables = classInfo.getValue().getMethodTable().getVirtualTable();
+
+            if(virtualTables != null){
+                System.out.println("============== Virtual Table for " + classInfo.getKey() + " ==============");
+                int i = 0;
+                for(Map.Entry<String, MethodInfo> method : virtualTables.entrySet()){
+                    ++i;
+                    System.out.println(i + " - " + method.getValue().getClassInfo().getName() + "." + method.getKey());
+                }
+            }
+        }
+    }
+
+    public void printSubTypesTables(){
+
+        for(Map.Entry<String, ClassInfo> classInfo : nameToClassInfoMap.entrySet()){
+            LinkedList<ClassInfo> subTypes = classInfo.getValue().getSubTypes();
+
+            if(subTypes != null){
+                System.out.println("============== SubTypes Table for " + classInfo.getKey() + " ==============");
+                int i = 0;
+                for(ClassInfo subType : subTypes){
+                    ++i;
+                    System.out.println(i + " - " + subType.getName());
+                }
+            }
+        }
+    }
 }

@@ -28,6 +28,8 @@ public class MethodTable {
 
     private final Map<String, MethodInfo> nameToMethodInfoMap = new LinkedHashMap<String, MethodInfo>();
 
+    private final LinkedHashMap<String, MethodInfo> virtualTable = new LinkedHashMap<>();
+
     MethodTable(
             ClassInfo classInfo) {
 
@@ -36,7 +38,8 @@ public class MethodTable {
 
     public void add(
             NMember_Method definition,
-            List<NId> params) {
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam) {
 
         Token nameToken = definition.get_Id();
         String name = nameToken.getText();
@@ -47,12 +50,13 @@ public class MethodTable {
         }
 
         this.nameToMethodInfoMap.put(name, new NormalMethodInfo(this,
-                definition, params));
+                definition, params, returnParam));
     }
 
     public void add(
             NMember_Operator definition,
-            List<NId> params,
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam,
             Token operatorToken) {
 
         String name = operatorToken.getText();
@@ -63,12 +67,13 @@ public class MethodTable {
         }
 
         this.nameToMethodInfoMap.put(name, new OperatorMethodInfo(this,
-                definition, params, operatorToken));
+                definition, params, returnParam, operatorToken));
     }
 
     public void add(
             NMember_PrimitiveMethod definition,
-            List<NId> params) {
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam) {
 
         Token nameToken = definition.get_Id();
         String name = nameToken.getText();
@@ -79,12 +84,13 @@ public class MethodTable {
         }
 
         this.nameToMethodInfoMap.put(name, new PrimitiveNormalMethodInfo(this,
-                definition, params));
+                definition, params, returnParam));
     }
 
     public void add(
             NMember_PrimitiveOperator definition,
-            List<NId> params,
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam,
             Token operatorToken) {
 
         String name = operatorToken.getText();
@@ -95,7 +101,7 @@ public class MethodTable {
         }
 
         this.nameToMethodInfoMap.put(name, new PrimitiveOperatorMethodInfo(
-                this, definition, params, operatorToken));
+                this, definition, params, returnParam, operatorToken));
     }
 
     private MethodInfo getMethodInfoOrNull(
@@ -129,5 +135,24 @@ public class MethodTable {
     public ClassInfo getClassInfo() {
 
         return this.classInfo;
+    }
+
+    public void addVirtual(
+            MethodInfo methodInfo){
+
+        if(this.virtualTable.size() == 0 && this.classInfo.getSuperClassInfoOrNull() != null){
+            this.setVirtualTable();
+        }
+        this.virtualTable.put(methodInfo.getName(), methodInfo);
+    }
+
+    public LinkedHashMap<String, MethodInfo> getVirtualTable(){
+
+        return this.virtualTable;
+    }
+
+    private void setVirtualTable(){
+
+        this.virtualTable.putAll(this.classInfo.getSuperClassInfoOrNull().getMethodTable().getVirtualTable());
     }
 }

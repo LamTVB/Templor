@@ -17,25 +17,33 @@
 
 class Object {
 
-  fun ==(obj) {
+  fun ==(Object obj) : Boolean{
     return self is obj;
   }
 
-  fun !=(obj){
+  fun !=(Object obj) : Boolean{
     return !(self == obj);
   }
 
-  fun print(obj) {
+  fun print(Object obj) {
     obj.to_s().to_system_out();
   }
 
-  fun to_s() {
-    return null;
+  fun to_system_out(){
+    print(self);
   }
 
-  primitive abort(message);
+  fun to_s() : String{
+    return self;
+  }
 
-  fun assert(cond,message) {
+  fun m(){
+    print("lala");
+  }
+
+  primitive abort(String message);
+
+  fun assert(Boolean cond, String message) {
     if (!cond) {
       abort("assertion failed: " + message);
     }
@@ -44,7 +52,7 @@ class Object {
 
 class Boolean {
 
-  fun to_s() {
+  fun to_s() : String {
     if(self) {
       return "true";
     }
@@ -54,31 +62,30 @@ class Boolean {
 
 class Integer {
 
-
-  primitive +(i);
-  primitive *(i);
-  primitive %(i);
-  primitive -(i);
-  primitive to_s();
-  primitive /(i);
+  primitive +(Object i) : Object;
+  primitive *(Object i) : Object;
+  primitive %(Object i) : Object;
+  primitive -(Object i) : Object;
+  primitive to_s() : String;
+  primitive /(Object i) : Object;
 }
 
 class String {
 
-  fun to_s() {
+  fun to_s() : String{
     return self;
   }
 
-  primitive +(s);
+  primitive +(Object s) : Object;
   primitive to_system_out();
 }
 
 class Float{
-    primitive +(f);
-    primitive -(f);
-    primitive *(f);
-    primitive /(f);
-    primitive to_s();
+    primitive +(Object f) : Object;
+    primitive -(Object f) : Object;
+    primitive *(Object f) : Object;
+    primitive /(Object f) : Object;
+    primitive to_s() : String;
 }
 
 class A {
@@ -93,12 +100,24 @@ class B {
   }
 }
 
+class C special A{
+  fun m(){
+    print("I'm in class C");
+  }
+}
+
+class D special A{
+  fun p(){
+    print("I'm in class D");
+  }
+}
+
 class Person {
-  var _name;
-  var _age;
+  String _name;
+  Integer _age;
 
   /* method that plays the role of a constructor */
-  fun init(name, age) {
+  fun init(String name, Integer age) : Person{
     assert(!(name is null), "name must not be null");
     assert(name isa String, "name must be a String");
     assert(!(age is null), "age must not be null");
@@ -108,23 +127,36 @@ class Person {
     return self; /* to allow call chaining */
   }
 
-  fun to_s() {
+  fun to_s() : String{
     return "name: " + _name + ", age: " + _age.to_s();
   }
 
-  fun <(person){
+  fun <(Person person) : Boolean{
      assert(person isa Person, "person must be a Person");
      return _age < person.getAge();
   }
 
-  fun getName(){
+  fun getName() : String{
     return _name;
   }
 
-  fun getAge(){
+  fun getAge() : Integer{
     return _age;
   }
+
+  fun setAge(Integer age){
+    _age = age;
+  }
+
+  fun setName(String name){
+    _name = name;
+  }
 }
+
+Float a = 2.2;
+Float b = 3.3;
+Float c = 10.1;
+Float f = 12 % 5;
 
 class Array{
 
@@ -137,11 +169,13 @@ f = 12 % 5;
 
 b = b + a;
 a = b - a;
-d = a * 2;
-e = b / 2;
-g = 1.3;
+Float d = a * 2;
+Float e = b / 2;
+Float g = 1.3;
 g = g + 1;
 
+Person first_person = new Person.init("Jean", 223);
+Person second_person = new Person.init("Pierre", 22);
 first_person = new Person.init("Jean", 27);
 second_person = new Person.init("Pierre", 22);
 third_person = new Person.init("Jacques", 32);
@@ -159,10 +193,14 @@ if(first_person < second_person){
 }else{
     print(first_person.getName() + " est plus vieux que " + second_person.getName());
 }
+second_person.setAge(12);
+second_person.setName("Jacques");
+
+print(second_person);
 
 print("HELLO world.");
 print("test" + 21 + "test" + "test" + "test" + 21);
-print(21 + "test" + 21 + 21 + 21 + "test");
+print(21 + "test" + 21 + "test" + 21 + "test");
 
 print("1*156*2*0 = " + 1*156/2*0);
 print("4+2+1+2*3 = " + 2+1+2*3); /* 216 */
@@ -185,8 +223,8 @@ print("f = " + f);
 print("g = " + g);
 
 print(new Person.init("Joe",21));
-
-i = 0;
+Object o;
+Integer i = 0;
 while(!(i == 2)) {
   if(i == 0) {
     o = new A;

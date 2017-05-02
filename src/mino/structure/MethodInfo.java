@@ -27,23 +27,31 @@ public abstract class MethodInfo {
 
     private final MethodTable methodTable;
 
-    private final List<String> paramNames = new LinkedList<String>();
+    private final LinkedList<VariableInfo> params = new LinkedList<>();
+
+    private final LinkedList<String> paramNames = new LinkedList<String>();
+
+    private final ClassInfo returnParam;
 
     MethodInfo(
             MethodTable methodTable,
-            List<NId> params) {
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam) {
 
         this.methodTable = methodTable;
+        this.returnParam = returnParam;
 
         Set<String> paramNameSet = new LinkedHashSet<String>();
-        for (NId id : params) {
-            String name = id.getText();
+
+        for (VariableInfo variableInfo : params) {
+            String name = variableInfo.getName();
             if (paramNameSet.contains(name)) {
                 throw new InterpreterException("duplicate parameter " + name,
-                        id);
+                        variableInfo.getLocation());
             }
             paramNameSet.add(name);
             this.paramNames.add(name);
+            this.params.add(variableInfo);
         }
     }
 
@@ -53,6 +61,12 @@ public abstract class MethodInfo {
             int i) {
 
         return this.paramNames.get(i);
+    }
+
+    public VariableInfo getParamInfo(
+            int i){
+
+        return this.params.get(i);
     }
 
     public int getParamCount() {
@@ -66,5 +80,15 @@ public abstract class MethodInfo {
     public ClassInfo getClassInfo() {
 
         return this.methodTable.getClassInfo();
+    }
+
+    public LinkedList<VariableInfo> getParams(){
+
+        return this.params;
+    }
+
+    public ClassInfo getClassReturnParam(){
+
+        return this.returnParam;
     }
 }

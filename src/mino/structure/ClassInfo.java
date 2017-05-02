@@ -21,6 +21,8 @@ import mino.exception.*;
 import mino.language_mino.*;
 import templor.structure.Template;
 
+import java.util.LinkedList;
+
 public class ClassInfo {
 
     private final ClassTable classTable;
@@ -34,6 +36,8 @@ public class ClassInfo {
     private final FieldTable fieldTable = new FieldTable(this);
 
     private Template template;
+
+    private final LinkedList<ClassInfo> subTypes = new LinkedList<>();
 
     ClassInfo(
             ClassTable classTable,
@@ -133,5 +137,17 @@ public class ClassInfo {
     public boolean hasTemplate(){
 
         return this.template != null;
+    }
+
+    public void addSubTypes(ClassInfo classInfo){
+        if(this.superClass != null){
+            this.superClass.addSubTypes(classInfo);
+        }
+
+        this.subTypes.add(classInfo);
+    }
+
+    public LinkedList<ClassInfo> getSubTypes(){
+        return this.subTypes;
     }
 }

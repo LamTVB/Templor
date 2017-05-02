@@ -21,6 +21,7 @@ import java.io.*;
 
 import mino.exception.*;
 import mino.language_mino.*;
+import mino.structure.ClassTable;
 import mino.walker.*;
 import templor.exception.TemplorException;
 
@@ -79,19 +80,34 @@ public class MinoInterpreter {
         }
 
         InterpreterEngine interpreterEngine = new InterpreterEngine();
+        ClassTable classTable = new ClassTable();
+
         try {
+            //Fill classTable
+            ClassFinder.find(syntaxTree, classTable);
+
+            //Fill subtypes of each class
+            SubTypesFinder.print(syntaxTree, classTable);
+
+            //Collect methods and attributes to each class
+            ClassDefinitionFinder.find(syntaxTree, classTable);
+
+            SemanticAnalysis.verify(syntaxTree, classTable);
+
+            //Fill virtual tables of each class and print it
+            VirtualTablePrinter.print(syntaxTree, classTable);
+
             // interpret
-            interpreterEngine.visit(syntaxTree);
+            interpreterEngine.visit(syntaxTree, classTable);
         }
         catch (InterpreterException e) {
             System.out.flush();
             System.err.println("INTERPRETER ERROR: " + e.getMessage() + ".");
             interpreterEngine.printStackTrace();
             System.exit(1);
-        }catch(TemplorException e){
+        }catch(SemanticException e){
             System.out.flush();
-            System.err.println("TEMPLOR ERROR: " + e.getMessage() + ".");
-            interpreterEngine.printStackTrace();
+            System.err.println("SEMANTIC ERROR: " + e.getMessage() + ".");
             System.exit(1);
         }
 

@@ -40,22 +40,23 @@ public class PrimitiveNormalMethodInfo
     PrimitiveNormalMethodInfo(
             MethodTable methodTable,
             NMember_PrimitiveMethod definition,
-            List<NId> params) {
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam) {
 
-        super(methodTable, params);
+        super(methodTable, params, returnParam);
         this.definition = definition;
 
         String className = methodTable.getClassInfo().getName();
         if (className.equals("Object") && getName().equals("abort")) {
             if (params.size() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "abort method has one parameter", definition.get_Id());
             }
             this.operation = Operation.OBJECT_ABORT;
         }
         else if (className.equals("Integer") && getName().equals("to_s")) {
             if (params.size() != 0) {
-                throw new InterpreterException("to_s method has no parameter",
+                throw new SemanticException("to_s method has no parameter",
                         definition.get_Id());
             }
             this.operation = Operation.INTEGER_TO_S;
@@ -63,21 +64,21 @@ public class PrimitiveNormalMethodInfo
         else if (className.equals("String")
                 && getName().equals("to_system_out")) {
             if (params.size() != 0) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "to_system_out method has no parameter",
                         definition.get_Id());
             }
             this.operation = Operation.STRING_TO_SYSTEM_OUT;
         }else if(className.equals("Float") && getName().equals("to_s")){
             if (params.size() != 0) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "to_s method has no parameter",
                         definition.get_Id());
             }
             this.operation = Operation.FLOAT_TO_S;
         }
         else {
-            throw new InterpreterException("method " + getName()
+            throw new SemanticException("method " + getName()
                     + " is not primitive in class " + className,
                     definition.get_Id());
         }

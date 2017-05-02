@@ -33,50 +33,51 @@ public class OperatorMethodInfo
     OperatorMethodInfo(
             MethodTable methodTable,
             NMember_Operator definition,
-            List<NId> params,
+            LinkedList<VariableInfo> params,
+            ClassInfo returnParam,
             Token operatorToken) {
 
-        super(methodTable, params);
+        super(methodTable, params, returnParam);
         this.definition = definition;
         this.operatorToken = operatorToken;
 
         if (getName().equals("+")) {
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method + must have a single parameter", operatorToken);
             }
         }
         else if (getName().equals("==")) {
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method == must have a single parameter", operatorToken);
             }
         }else if(getName().equals("!=")){
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method != must have a single parameter", operatorToken);
             }
         }else if(getName().equals("<")){
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method < must have a single parameter", operatorToken);
             }
         }
         else if(getName().equals("<=")){
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method <= must have a single parameter", operatorToken);
             }
         }
         else if(getName().equals(">")){
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method > must have a single parameter", operatorToken);
             }
         }
         else if(getName().equals(">=")){
             if (getParamCount() != 1) {
-                throw new InterpreterException(
+                throw new SemanticException(
                         "method >= must have a single parameter", operatorToken);
             }
         }

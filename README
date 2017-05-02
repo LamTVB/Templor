@@ -28,3 +28,5 @@ In order to compile Templor, it is the same command but replace mino by templor.
 java -jar path-to-sablecc-4-beta.2/lib/sablecc.jar -d src -p templor grammar/templor.sablecc
 
 Have fun!
+
+To download sablecc-4-beta.2 : http://www.sablecc.org/downloads
