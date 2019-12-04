@@ -17,7 +17,7 @@ public class TemplorInterpreter {
             String[] args) {
 
         Reader in = null;
-
+        System.err.println("test");
         if (args.length == 0) {
             // read from standard input
             in = new InputStreamReader(System.in);
